@@ -1,0 +1,126 @@
+@page {
+    size: A4; /* Common paper size, or use 'auto' */
+    margin: 1cm; /* Sensible default margin for printing */
+}
+
+body {
+    font-family: Arial, sans-serif; /* Consistent font */
+}
+
+/* Styles for screen view when extension is active */
+#print-container {
+    width: 100%;
+    max-width: 800px; /* Limit width on screen for readability */
+    margin: 20px auto; /* Center on screen */
+    padding: 20px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+}
+
+.return-wrapper {
+    page-break-inside: avoid; /* Prevent breaking a single item across pages */
+    margin-bottom: 20px; /* Space between items on screen */
+}
+
+.return-wrapper:last-child {
+    margin-bottom: 0;
+}
+
+.print-element {
+    margin-bottom: 15px;
+}
+
+img.return-label-image, 
+img[alt*="Rücksend"] {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto 10px auto; /* Center images and add some space below */
+}
+
+table.a-bordered {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    page-break-inside: avoid; /* Try to keep table on one page */
+}
+
+table.a-bordered th,
+table.a-bordered td {
+    border: 1px solid #666; /* Darker border for print clarity */
+    padding: 8px;
+    text-align: left;
+    font-size: 10pt; /* Adjust as needed for print */
+}
+
+table.a-bordered th {
+    background-color: #f0f0f0; /* Light grey header for table */
+}
+
+/* Print-specific styles */
+@media print {
+    /* Hide all elements on the page by default */
+    body > *:not(#print-container) {
+        display: none !important;
+    }
+
+    /* Ensure the print container and its children are visible */
+    #print-container,
+    #print-container * {
+        visibility: visible !important;
+        display: block !important; /* Force display for elements if they were hidden */
+    }
+
+    #print-container {
+        position: static !important; /* Override any fixed/absolute positioning */
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        font-size: 10pt; /* Base font size for print */
+        color: #000;
+        background: #fff;
+    }
+
+    .return-wrapper {
+        margin: 0 0 5mm 0; /* Margin at bottom of each item for page break */
+        padding: 0;
+        page-break-after: always; /* Ensure each item is on a new page if multiple */
+        overflow: hidden; /* Prevent content from spilling badly, though 'visible' often preferred */
+    }
+
+    .return-wrapper:last-child {
+        page-break-after: avoid; /* No page break after the very last item */
+        margin-bottom: 0;
+    }
+    
+    /* Ensure direct children of wrapper and print-container behave as expected */
+    #print-container > div, .return-wrapper > div {
+        display: block !important; /* or appropriate display type */
+        width: auto !important; /* Let content dictate width or set to 100% if needed */
+    }
+
+    img.return-label-image,
+    img[alt*="Rücksend"] {
+        max-width: 100% !important; /* Ensure images fit within the page */
+        height: auto !important;
+        margin-bottom: 5mm;
+    }
+
+    table.a-bordered {
+        width: 100% !important;
+        margin: 0 0 5mm 0;
+    }
+
+    table.a-bordered th,
+    table.a-bordered td {
+        font-size: 9pt; /* Slightly smaller for tables if needed */
+    }
+
+    /* Hide buttons (Print, Back) when printing */
+    button {
+        display: none !important;
+    }
+}

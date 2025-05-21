@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+  "name": "Amazon Return Label Printer",
+  "version": "1.0",
+  "description": "Simplifies Amazon return pages for printing labels",
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.amazon.de/gp/css/returns/*",
+        "*://www.amazon.de/spr/returns/label/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "permissions": ["activeTab"]
+}
