@@ -1,49 +1,71 @@
 # Amazon Return Label Printer
 
-A Firefox extension that simplifies Amazon return pages for printing labels and relevant information.
+**Tired of wasting paper when printing Amazon return labels?**
+This Firefox add-on automatically **cleans up the Amazon.de return label page**, showing only what you actually need for printing – no clutter, no instructions, no multi-page mess.
 
-## Features
+👉 **Available on the Firefox Add-on Store:**
+[https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/](https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/)
 
-- Extracts only the essential return label and item information
-- Handles multiple returns on a single page
-- Properly formats the page for printing
-- Adds a print button for easy access
-- Optimized for Amazon.de return pages
+---
 
-## Installation
+## ✂️ What It Does
 
-1. Open Firefox and navigate to `about:debugging`
-2. Click on "This Firefox" in the left sidebar
-3. Click "Load Temporary Add-on"
-4. Select any file from the extension directory (e.g., `manifest.json`)
+* Extracts only the **DHL return label** and the **product description table**
+* Removes Amazon’s UI, instructions, and irrelevant text
+* Formats everything to fit neatly on **one A4 portrait page**
+* Adds a **“Print” button** for instant access
+* Works with **multiple return labels** on one page
 
-## Usage
+---
 
-1. Navigate to your Amazon returns page (e.g., `https://www.amazon.de/gp/css/returns/...`)
-2. The page will automatically be simplified to show only return labels and item information
-3. Click the "Drucken (Print)" button in the top-right corner or press Ctrl+P
-4. In the print dialog, ensure the following settings:
-   - Layout: Portrait
-   - Paper size: A4
-   - Margins: None or Minimal
-   - Background graphics: Enabled (to print any barcodes)
+## 🖨️ Why It Matters
 
-## Development
+Amazon’s return label view is cluttered and poorly optimized for printing. The default print layout often spans **two pages**, wasting paper and causing confusion.
 
-To make changes to the extension:
+This extension fixes that by showing only the **essential information**:
 
-1. Edit the relevant files:
-   - `content.js`: Main logic for modifying the page
-   - `styles.css`: Styling for the print view
-   - `manifest.json`: Extension configuration
+* ✅ Save paper
+* ✅ Print faster
+* ✅ Avoid cutting or taping pages together
+* ✅ Focus only on what matters: **label + item info**
 
-2. After making changes, reload the temporary extension in `about:debugging` by clicking the "Reload" button.
+---
 
-## Known Issues
+## 🗺️ Optimized For
 
-- The extension only works on Amazon.de return pages
-- Some styling might need adjustment for different screen sizes
+* **Amazon.de** return label pages
+* Firefox Desktop
 
-## License
+---
 
-This project is open source and available under the MIT License.
+## 🚀 Installation (Temporary for Development)
+
+1. Open Firefox and go to `about:debugging`
+2. Click **"This Firefox"** in the sidebar
+3. Click **"Load Temporary Add-on"**
+4. Select any file inside the extension folder (e.g. `manifest.json`)
+
+---
+
+## 🔧 Development
+
+Edit the following files to customize or improve functionality:
+
+* `content.js`: Core logic for modifying the page
+* `styles.css`: CSS rules for the cleaned-up view and print layout
+* `manifest.json`: Extension metadata
+
+Reload the extension using the **"Reload"** button in `about:debugging`.
+
+---
+
+## 🐞 Known Issues
+
+* Only supports **Amazon.de** (German return portal)
+* May require fine-tuning for unusual screen resolutions
+
+---
+
+## 🪪 License
+
+MIT License – Free to use, share, and improve.
