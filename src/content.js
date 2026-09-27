@@ -2,6 +2,8 @@
 // right below the first label offer "Minimal drucken" (prints only labels, item
 // table and overview) and, for QR-code returns, "Google Wallet".
 
+const t = (key, ...subs) => chrome.i18n.getMessage(key, subs) || key;
+
 const LABEL_SELECTOR = 'img.return-label-image[alt="Rücksendeetikett"], img.return-label-image.cut-line-sign, img.return-label-image[alt*="QR"]';
 
 // Item table that belongs to a label: a sibling of the label's container, up to 3 levels up.
@@ -82,7 +84,8 @@ function printMinimal() {
     document.body.appendChild(frame);
     const doc = frame.contentDocument;
     doc.open();
-    doc.write('<!doctype html><html><head><meta charset="utf-8"><title>Rücksendung</title></head><body></body></html>');
+    doc.write('<!doctype html><html><head><meta charset="utf-8"><title></title></head><body></body></html>');
+    doc.title = t('printTitle');
     doc.close();
     const style = doc.createElement('style');
     style.textContent = PRINT_CSS;
@@ -108,7 +111,8 @@ const PRINT_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden=
 function toolbarButton(cls, icon, text) {
     const btn = document.createElement('button');
     btn.className = 'arp-btn ' + cls;
-    btn.innerHTML = icon; // constant SVG markup
+    const svg = new DOMParser().parseFromString(icon.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), 'image/svg+xml').documentElement;
+    btn.appendChild(document.importNode(svg, true));
     const label = document.createElement('span');
     label.textContent = text;
     btn.appendChild(label);
@@ -116,21 +120,21 @@ function toolbarButton(cls, icon, text) {
 }
 
 function walletButton(labelImg, number) {
-    const text = 'Google Wallet' + (number ? ' (' + number + ')' : '');
+    const text = t('walletButton') + (number ? ' (' + number + ')' : '');
     const { btn, label } = toolbarButton('arp-wallet', WALLET_ICON, text);
-    btn.title = 'QR-Code als Pass in Google Wallet speichern';
+    btn.title = t('walletTooltip');
     btn.onclick = () => {
         const cell = findItemTable(labelImg)?.querySelector('td');
         const title = cell ? cell.textContent.replace(/\s+/g, ' ').trim() : '';
         btn.disabled = true;
-        label.textContent = 'Erstelle Pass…';
+        label.textContent = t('walletWorking');
         chrome.runtime.sendMessage({ type: 'walletPass', imageUrl: labelImg.src, title }, res => {
             btn.disabled = false;
             if (res && res.ok) {
                 label.textContent = text + ' ✓';
             } else {
-                label.textContent = 'Fehler';
-                btn.title = (res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || 'unbekannter Fehler';
+                label.textContent = t('walletError');
+                btn.title = (res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || t('unknownError');
             }
         });
     };
@@ -153,8 +157,8 @@ function updateToolbar() {
     bar.id = 'arp-toolbar';
     bar.dataset.signature = signature;
 
-    const { btn: print } = toolbarButton('arp-print-btn', PRINT_ICON, 'Minimal drucken');
-    print.title = 'Nur Etikett, Artikelliste und Übersicht drucken';
+    const { btn: print } = toolbarButton('arp-print-btn', PRINT_ICON, t('printButton'));
+    print.title = t('printTooltip');
     print.onclick = printMinimal;
     bar.appendChild(print);
 

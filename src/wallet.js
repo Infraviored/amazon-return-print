@@ -3,6 +3,8 @@
 // host permission) can read its pixels. jsQR decodes it; the pass itself is
 // signed by the wallet-service (see wallet-service/README.md).
 
+const t = (key, ...subs) => chrome.i18n.getMessage(key, subs) || key;
+
 // DHL "label free box free" returns: pipe-separated Latin-1 text, e.g.
 // RON|<shipment no>||DHL RETOURE|A|<recipient>|...|<ddmmyy>|<code>|<n>
 function parseReturnQr(text) {
@@ -17,14 +19,14 @@ function parseReturnQr(text) {
 
 async function decodeQrFromUrl(url) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error('QR-Bild nicht ladbar (' + res.status + ')');
+  if (!res.ok) throw new Error(t('errQrImage', String(res.status)));
   const bitmap = await createImageBitmap(await res.blob());
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   const ctx = canvas.getContext('2d');
   ctx.drawImage(bitmap, 0, 0);
   const img = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
   const code = jsQR(img.data, img.width, img.height);
-  if (!code) throw new Error('kein QR-Code im Bild gefunden');
+  if (!code) throw new Error(t('errNoQr'));
   // the payload is Latin-1 bytes (jsQR's .data is empty for it): keep bytes 1:1
   return String.fromCharCode(...code.binaryData);
 }
@@ -42,7 +44,7 @@ async function createWalletPass({ imageUrl, title }) {
     body: JSON.stringify(body),
   });
   const out = await res.json().catch(() => ({}));
-  if (!res.ok || !out.saveUrl) throw new Error('Wallet-Dienst: ' + (out.error || res.status));
+  if (!res.ok || !out.saveUrl) throw new Error(t('errService', String(out.error || res.status)));
   // open from here: the content script's click activation has expired by now,
   // so a window.open there would hit the popup blocker
   await chrome.tabs.create({ url: out.saveUrl });

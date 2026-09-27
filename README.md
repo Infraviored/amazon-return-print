@@ -3,12 +3,11 @@
 **Tired of wasting paper when printing Amazon return labels? Or of printing at all?**
 This Firefox and Chrome add-on puts two buttons right under your Amazon.de return label: **print only what matters** on one page, or **drop the return QR code straight into Google Wallet** and show it at the DHL counter from your phone.
 
-<p align="center"><img src="docs/1-buttons.png" width="700" alt="Two buttons under the Amazon return QR code: Minimal drucken and Google Wallet"></p>
-
 <table>
 <tr>
-<td align="center" width="50%"><img src="docs/2-minimal-print.png" alt="Print preview: only the QR code and the item table on one page"><br><b>Minimal drucken</b>: one page, just what the counter needs</td>
-<td align="center" width="50%"><img src="docs/3-google-wallet.png" alt="The return QR code saved as a Google Wallet pass"><br><b>Google Wallet</b>: the return QR code as a pass on your phone</td>
+<td align="center" width="33%"><img src="docs/1-buttons.png" alt="Two buttons under the Amazon return QR code"><br><b>Two buttons</b> right under the label</td>
+<td align="center" width="33%"><img src="docs/2-minimal-print.png" alt="Print preview: only the QR code and the item table on one page"><br><b>Minimal print</b>: one page, just what the counter needs</td>
+<td align="center" width="33%"><img src="docs/3-google-wallet.png" alt="The return QR code saved as a Google Wallet pass"><br><b>Google Wallet</b>: the return QR code on your phone</td>
 </tr>
 </table>
 
@@ -22,9 +21,10 @@ This Firefox and Chrome add-on puts two buttons right under your Amazon.de retur
 ## ✂️ What It Does
 
 * Leaves the Amazon page as it is and adds two buttons **directly below the label**
-* 🖨️ **Minimal drucken**: prints only the **return label or QR code**, the **item table** and the overview, on **one A4 portrait page**, no Amazon UI, no instructions
+* 🖨️ **Minimal print** (*Minimal drucken*): prints only the **return label or QR code**, the **item table** and the overview, on **one A4 portrait page**, no Amazon UI, no instructions
 * 📱 **Google Wallet**: for paperless "label free box free" returns, saves the **QR code as a Wallet pass** with return number, carrier and expiry date. One tap, no screenshots, no paper
 * Works with **multiple return labels** on one page
+* English and German, following the browser language
 
 ---
 
