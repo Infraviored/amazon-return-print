@@ -7,7 +7,8 @@
     "build:firefox": "node scripts/build.mjs firefox",
     "build:chrome": "node scripts/build.mjs chrome",
     "lint:firefox": "npm run build:firefox && web-ext lint -s build/firefox",
-    "check:chrome": "npm run build:chrome && node scripts/check-chrome.mjs"
+    "check:chrome": "npm run build:chrome && node scripts/check-chrome.mjs",
+    "test:wallet": "node --test wallet-service/server.test.mjs"
   },
   "devDependencies": {
     "web-ext": "^10.7.0"

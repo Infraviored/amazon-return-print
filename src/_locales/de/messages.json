@@ -1,0 +1,51 @@
+{
+  "extName": {
+    "message": "Amazon Return Label Printer"
+  },
+  "extDescription": {
+    "message": "Fügt auf Amazon.de-Rücksendeseiten zwei Buttons hinzu: nur Etikett und Artikelliste auf einer Seite drucken oder den Rücksende-QR-Code in Google Wallet speichern."
+  },
+  "printButton": {
+    "message": "Minimal drucken"
+  },
+  "printTooltip": {
+    "message": "Nur Etikett, Artikelliste und Übersicht drucken"
+  },
+  "printTitle": {
+    "message": "Rücksendung"
+  },
+  "walletButton": {
+    "message": "Google Wallet"
+  },
+  "walletTooltip": {
+    "message": "QR-Code als Pass in Google Wallet speichern"
+  },
+  "walletWorking": {
+    "message": "Erstelle Pass…"
+  },
+  "walletError": {
+    "message": "Fehler"
+  },
+  "unknownError": {
+    "message": "unbekannter Fehler"
+  },
+  "errQrImage": {
+    "message": "QR-Bild nicht ladbar ($DETAIL$)",
+    "placeholders": {
+      "detail": {
+        "content": "$1"
+      }
+    }
+  },
+  "errNoQr": {
+    "message": "kein QR-Code im Bild gefunden"
+  },
+  "errService": {
+    "message": "Wallet-Dienst: $DETAIL$",
+    "placeholders": {
+      "detail": {
+        "content": "$1"
+      }
+    }
+  }
+}

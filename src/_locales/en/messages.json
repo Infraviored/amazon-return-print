@@ -1,0 +1,51 @@
+{
+  "extName": {
+    "message": "Amazon Return Label Printer"
+  },
+  "extDescription": {
+    "message": "Adds two buttons to Amazon.de return pages: print only the return label and item list on one page, or save the return QR code to Google Wallet."
+  },
+  "printButton": {
+    "message": "Minimal print"
+  },
+  "printTooltip": {
+    "message": "Print only the label, item list and overview"
+  },
+  "printTitle": {
+    "message": "Return"
+  },
+  "walletButton": {
+    "message": "Google Wallet"
+  },
+  "walletTooltip": {
+    "message": "Save the QR code as a Google Wallet pass"
+  },
+  "walletWorking": {
+    "message": "Creating pass…"
+  },
+  "walletError": {
+    "message": "Error"
+  },
+  "unknownError": {
+    "message": "unknown error"
+  },
+  "errQrImage": {
+    "message": "QR image could not be loaded ($DETAIL$)",
+    "placeholders": {
+      "detail": {
+        "content": "$1"
+      }
+    }
+  },
+  "errNoQr": {
+    "message": "no QR code found in the image"
+  },
+  "errService": {
+    "message": "Wallet service: $DETAIL$",
+    "placeholders": {
+      "detail": {
+        "content": "$1"
+      }
+    }
+  }
+}

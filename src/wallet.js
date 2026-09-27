@@ -1,0 +1,52 @@
+// Google Wallet export, runs in the background (Firefox page / Chrome service worker).
+// The QR image lives on Amazon's S3 without CORS, so only the background (with a
+// host permission) can read its pixels. jsQR decodes it; the pass itself is
+// signed by the wallet-service (see wallet-service/README.md).
+
+const t = (key, ...subs) => chrome.i18n.getMessage(key, subs) || key;
+
+// DHL "label free box free" returns: pipe-separated Latin-1 text, e.g.
+// RON|<shipment no>||DHL RETOURE|A|<recipient>|...|<ddmmyy>|<code>|<n>
+function parseReturnQr(text) {
+  const f = text.split('|');
+  const info = {};
+  if (f[1] && /^\d{8,20}$/.test(f[1])) info.returnId = 'RET' + f[1];
+  if (f[3]) info.carrier = f[3].replace(/\s+RETOURE$/i, '').trim().slice(0, 80);
+  const d = f.find((x, i) => i > 17 && /^\d{6}$/.test(x)); // ddmmyy, looks like the QR's validity
+  if (d) info.deadline = `20${d.slice(4, 6)}-${d.slice(2, 4)}-${d.slice(0, 2)}`;
+  return info;
+}
+
+async function decodeQrFromUrl(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(t('errQrImage', String(res.status)));
+  const bitmap = await createImageBitmap(await res.blob());
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0);
+  const img = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+  const code = jsQR(img.data, img.width, img.height);
+  if (!code) throw new Error(t('errNoQr'));
+  // the payload is Latin-1 bytes (jsQR's .data is empty for it): keep bytes 1:1
+  return String.fromCharCode(...code.binaryData);
+}
+
+// Shared pass-signing service for all users (source: wallet-service/).
+const WALLET_SERVICE_URL = 'https://wallet.infraviored.com';
+
+async function createWalletPass({ imageUrl, title }) {
+  const qr = await decodeQrFromUrl(imageUrl);
+  const body = { qr, ...parseReturnQr(qr) };
+  if (title) body.title = title.replace(/[<>]/g, '').trim().slice(0, 80);
+  const res = await fetch(WALLET_SERVICE_URL + '/pass', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok || !out.saveUrl) throw new Error(t('errService', String(out.error || res.status)));
+  // open from here: the content script's click activation has expired by now,
+  // so a window.open there would hit the popup blocker
+  await chrome.tabs.create({ url: out.saveUrl });
+  return out.saveUrl;
+}

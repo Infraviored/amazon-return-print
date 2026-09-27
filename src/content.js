@@ -1,198 +1,176 @@
-// Track if we've already processed the page
-let isProcessed = false;
+// Amazon return label pages: the page stays as it is. Two buttons centred
+// right below the first label offer "Minimal drucken" (prints only labels, item
+// table and overview) and, for QR-code returns, "Google Wallet".
 
-// Function to create print button
-function createPrintButton() {
-    const printButton = document.createElement('button');
-    printButton.textContent = 'Drucken (Print)';
-    printButton.style.position = 'fixed';
-    printButton.style.top = '10px';
-    printButton.style.right = '10px';
-    printButton.style.padding = '10px 20px';
-    printButton.style.backgroundColor = '#FF9900';
-    printButton.style.border = 'none';
-    printButton.style.borderRadius = '4px';
-    printButton.style.cursor = 'pointer';
-    printButton.style.zIndex = '1000';
-    printButton.onclick = () => {
-        window.print();
+const t = (key, ...subs) => chrome.i18n.getMessage(key, subs) || key;
+
+const LABEL_SELECTOR = 'img.return-label-image[alt="Rücksendeetikett"], img.return-label-image.cut-line-sign, img.return-label-image[alt*="QR"]';
+
+// Item table that belongs to a label: a sibling of the label's container, up to 3 levels up.
+function findItemTable(labelImg) {
+    let el = labelImg.parentElement;
+    for (let i = 0; i < 3 && el; i++) {
+        for (let sib = el.nextElementSibling; sib; sib = sib.nextElementSibling) {
+            if (sib.matches('table.a-bordered')) return sib;
+            const child = sib.querySelector('table.a-bordered');
+            if (child) return child;
+        }
+        el = el.parentElement;
+    }
+    return null;
+}
+
+// "Rücksendungsübersicht" image for a label: first in the label's section and the
+// following sections, then anywhere in the surrounding return block.
+function findOverviewImage(labelImg) {
+    const pick = imgs => {
+        let found = null;
+        for (const img of imgs) {
+            if (img === labelImg) continue;
+            if (img.classList.contains('return-label-image')) return img;
+            found = found || img;
+        }
+        return found;
     };
-    return printButton;
-}
-
-// Function to process the return label page
-function processReturnLabelPage() {
-    const mainLabelImages = document.querySelectorAll('img.return-label-image[alt="Rücksendeetikett"], img.return-label-image.cut-line-sign');
-
-    if (isProcessed || mainLabelImages.length === 0) {
-        return;
+    let section = labelImg.closest('.a-section:not(.a-spacing-none):not(.a-text-center)') || labelImg.closest('.a-section');
+    for (let i = 0; i < 10 && section; i++) {
+        const img = pick(section.querySelectorAll('img[alt="Rücksendungsübersicht"]'));
+        if (img) return img;
+        do { section = section.nextElementSibling; } while (section && !section.matches('.a-section, .a-box'));
     }
-    isProcessed = true;
-
-    const printContainer = document.createElement('div');
-    printContainer.id = 'print-container';
-
-    mainLabelImages.forEach((mainLabelImg, index) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'return-wrapper';
-
-        // 1. Add Main Label Image
-        const mainLabelContainer = document.createElement('div');
-        mainLabelContainer.className = 'a-section a-spacing-none a-text-center print-element';
-        mainLabelContainer.appendChild(mainLabelImg.cloneNode(true));
-        wrapper.appendChild(mainLabelContainer);
-
-        // 2. Find and Add Item Table
-        // Assumes table is a sibling to the mainLabelImg's container or a sibling to a few parents up.
-        let currentElement = mainLabelImg.parentElement;
-        let itemTable = null;
-        for (let i = 0; i < 3 && currentElement; i++) { // Check current element's siblings then parent's siblings
-            let sibling = currentElement.nextElementSibling;
-            while (sibling) {
-                if (sibling.matches('table.a-bordered')) {
-                    itemTable = sibling;
-                    break;
-                }
-                // Check if table is a child of sibling (e.g. if sibling is a wrapper div)
-                const childTable = sibling.querySelector('table.a-bordered');
-                if(childTable){
-                    itemTable = childTable;
-                    break;
-                }
-                sibling = sibling.nextElementSibling;
-            }
-            if (itemTable) break;
-            currentElement = currentElement.parentElement;
-        }
-
-        if (itemTable) {
-            const tableContainer = document.createElement('div');
-            tableContainer.className = 'print-element';
-            tableContainer.appendChild(itemTable.cloneNode(true));
-            wrapper.appendChild(tableContainer);
-        }
-
-        // 3. Find and Add Overview Image (Rücksendungsübersicht)
-        let overviewImage = null;
-
-        // Attempt 1: Search in the main label's containing section and its subsequent siblings.
-        // Try to get a block-level .a-section, not the immediate image wrapper.
-        let currentSearchElement = mainLabelImg.closest('.a-section:not(.a-spacing-none):not(.a-text-center)');
-        if (!currentSearchElement) { // Fallback if the specific selector fails
-            currentSearchElement = mainLabelImg.closest('.a-section');
-        }
-
-        for (let i = 0; i < 10 && currentSearchElement; i++) { // Check current and up to 9 siblings
-            const imgs = currentSearchElement.querySelectorAll('img[alt="Rücksendungsübersicht"]');
-            for (const img of imgs) {
-                if (!img.isSameNode(mainLabelImg)) {
-                    if (img.classList.contains('return-label-image')) { // Prefer with class
-                        overviewImage = img;
-                        break;
-                    }
-                    if (!overviewImage) { // Take first one found if no preferred yet
-                        overviewImage = img;
-                    }
-                }
-            }
-            if (overviewImage && overviewImage.classList.contains('return-label-image')) {
-                break; // Found a preferred image, stop searching siblings
-            }
-            if (overviewImage && i > 0) {
-                 // Found a non-preferred one in a sibling, good enough if no preferred is found later in this sibling scan
-            }
-
-            currentSearchElement = currentSearchElement.nextElementSibling;
-            // Ensure next element is a plausible container (e.g., .a-section or .a-box)
-            while (currentSearchElement && !currentSearchElement.matches('.a-section, .a-box')) {
-                currentSearchElement = currentSearchElement.nextElementSibling;
-            }
-        }
-
-        // Attempt 2: Fallback to a broader scope if not found via sibling search
-        if (!overviewImage) {
-            const broaderScope = mainLabelImg.closest('div[id^="return-package-"], div.return-shipment, div.a-box, body');
-            if (broaderScope) {
-                const imgs = broaderScope.querySelectorAll('img[alt="Rücksendungsübersicht"]');
-                for (const img of imgs) {
-                    if (!img.isSameNode(mainLabelImg)) {
-                        if (img.classList.contains('return-label-image')) {
-                            overviewImage = img;
-                            break;
-                        }
-                        if (!overviewImage) {
-                            overviewImage = img;
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (overviewImage) {
-            const overviewContainer = document.createElement('div');
-            overviewContainer.className = 'a-section a-spacing-none a-text-center print-element'; // Consistent class for styling
-            overviewContainer.appendChild(overviewImage.cloneNode(true));
-            wrapper.appendChild(overviewContainer);
-        }
-
-        if (mainLabelImages.length > 1 && index < mainLabelImages.length - 1) {
-            wrapper.style.pageBreakAfter = 'always';
-            wrapper.style.marginBottom = '20px'; // For visual separation on screen if multiple items
-        }
-        printContainer.appendChild(wrapper);
-    });
-
-    if (printContainer.children.length > 0) {
-        const originalBodyHTML = document.body.innerHTML;
-        document.body.innerHTML = '';
-        document.body.appendChild(printContainer);
-        document.body.appendChild(createPrintButton());
-
-        const backButton = document.createElement('button');
-        backButton.textContent = 'Zurück (Back)';
-        backButton.style.position = 'fixed';
-        backButton.style.top = '10px';
-        backButton.style.right = '150px';
-        backButton.style.padding = '10px 20px';
-        backButton.style.backgroundColor = '#f0f0f0';
-        backButton.style.border = '1px solid #ddd';
-        backButton.style.borderRadius = '4px';
-        backButton.style.cursor = 'pointer';
-        backButton.style.zIndex = '1000';
-        backButton.onclick = () => {
-            document.body.innerHTML = originalBodyHTML;
-            isProcessed = false; 
-            // Re-attach observer if needed, or ensure it's robust to this reset
-            // For simplicity, full page reload might be an option or re-init observer if it's disconnected.
-            // Current observer is on document.body, might need re-check.
-        };
-        document.body.appendChild(backButton);
-    }
+    const scope = labelImg.closest('div[id^="return-package-"], div.return-shipment, div.a-box, body');
+    return scope ? pick(scope.querySelectorAll('img[alt="Rücksendungsübersicht"]')) : null;
 }
 
-function initObserver() {
-    // Debounced processing for mutations
-    let mutationTimeout;
-    const observer = new MutationObserver(() => {
-        if (document.readyState === 'complete' && !isProcessed) {
-            clearTimeout(mutationTimeout);
-            mutationTimeout = setTimeout(processReturnLabelPage, 500);
-        }
+function buildPrintView(labels) {
+    const view = document.createElement('div');
+    view.id = 'arp-print';
+    labels.forEach(label => {
+        const item = document.createElement('div');
+        item.className = 'arp-item';
+        const add = node => { const box = document.createElement('div'); box.className = 'arp-part'; box.appendChild(node.cloneNode(true)); item.appendChild(box); };
+        add(label);
+        const table = findItemTable(label);
+        if (table) add(table);
+        const overview = findOverviewImage(label);
+        if (overview) add(overview);
+        view.appendChild(item);
     });
+    return view;
+}
 
-    // Observe changes to the body and its children, as content might be loaded dynamically
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
+// Print from a separate hidden iframe with its own document and CSS, so the
+// page's own print styles cannot interfere. Waits for the images first.
+const PRINT_CSS = `
+  @page { size: A4; margin: 1cm; }
+  body { margin: 0; font: 10pt Arial, sans-serif; color: #000; }
+  .arp-item { page-break-after: always; }
+  .arp-item:last-child { page-break-after: auto; }
+  .arp-part { margin: 0 0 5mm; page-break-inside: avoid; text-align: center; }
+  img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #666; padding: 6px; text-align: left; font-size: 9pt; }
+  th { background: #f0f0f0; }
+`;
+
+function printMinimal() {
+    const labels = [...document.querySelectorAll(LABEL_SELECTOR)];
+    if (!labels.length) return;
+    document.getElementById('arp-print-frame')?.remove();
+    const frame = document.createElement('iframe');
+    frame.id = 'arp-print-frame';
+    // off-screen but rendered: visibility:hidden or a 0x0 frame can print blank (Firefox)
+    frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:1000px;border:0;opacity:0;pointer-events:none';
+    document.body.appendChild(frame);
+    const doc = frame.contentDocument;
+    doc.open();
+    doc.write('<!doctype html><html><head><meta charset="utf-8"><title></title></head><body></body></html>');
+    doc.title = t('printTitle');
+    doc.close();
+    const style = doc.createElement('style');
+    style.textContent = PRINT_CSS;
+    doc.head.appendChild(style);
+    const view = buildPrintView(labels);
+    view.querySelectorAll('img').forEach(img => { img.removeAttribute('loading'); img.src = img.src; }); // absolute URLs, eager
+    doc.body.appendChild(doc.importNode(view, true));
+    const images = [...doc.images].map(img => img.complete ? null : new Promise(r => { img.onload = img.onerror = r; })).filter(Boolean);
+    Promise.race([Promise.all(images), new Promise(r => setTimeout(r, 4000))]).then(() => {
+        // Chrome's print preview returns immediately: remove the frame only after
+        // printing, with a generous fallback
+        const done = () => frame.remove();
+        frame.contentWindow.addEventListener('afterprint', done);
+        setTimeout(done, 60000);
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
     });
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(processReturnLabelPage, 500); // Initial attempt
-        initObserver(); // Setup observer for dynamic changes
-    });
-} else {
-    setTimeout(processReturnLabelPage, 500); // Initial attempt for already loaded pages
-    initObserver(); // Setup observer for dynamic changes
+const WALLET_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19 7V6a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-8a3 3 0 0 0-3-3zM5 5h11a1 1 0 0 1 1 1v1H5a1 1 0 0 1 0-2zm15 11h-3a2 2 0 0 1 0-4h3zm0-6h-3a4 4 0 0 0 0 8h3v0a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8.83A3 3 0 0 0 5 9h14a1 1 0 0 1 1 1z"/><circle fill="currentColor" cx="17" cy="14" r="1"/></svg>';
+const PRINT_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M18 7V3H6v4H5a3 3 0 0 0-3 3v6h4v5h12v-5h4v-6a3 3 0 0 0-3-3zM8 5h8v2H8zm8 14H8v-5h8zm4-5h-2v-2H6v2H4v-4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1z"/></svg>';
+
+function toolbarButton(cls, icon, text) {
+    const btn = document.createElement('button');
+    btn.className = 'arp-btn ' + cls;
+    const svg = new DOMParser().parseFromString(icon.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), 'image/svg+xml').documentElement;
+    btn.appendChild(document.importNode(svg, true));
+    const label = document.createElement('span');
+    label.textContent = text;
+    btn.appendChild(label);
+    return { btn, label };
 }
+
+function walletButton(labelImg, number) {
+    const text = t('walletButton') + (number ? ' (' + number + ')' : '');
+    const { btn, label } = toolbarButton('arp-wallet', WALLET_ICON, text);
+    btn.title = t('walletTooltip');
+    btn.onclick = () => {
+        const cell = findItemTable(labelImg)?.querySelector('td');
+        const title = cell ? cell.textContent.replace(/\s+/g, ' ').trim() : '';
+        btn.disabled = true;
+        label.textContent = t('walletWorking');
+        chrome.runtime.sendMessage({ type: 'walletPass', imageUrl: labelImg.src, title }, res => {
+            btn.disabled = false;
+            if (res && res.ok) {
+                label.textContent = text + ' ✓';
+            } else {
+                label.textContent = t('walletError');
+                btn.title = (res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || t('unknownError');
+            }
+        });
+    };
+    return btn;
+}
+
+// Add the toolbar once labels are on the page; remove it if they disappear.
+function updateToolbar() {
+    const labels = [...document.querySelectorAll(LABEL_SELECTOR)];
+    const existing = document.getElementById('arp-toolbar');
+    if (!labels.length) { existing?.remove(); return; }
+    // rebuild when labels change (e.g. Amazon loads a second package later)
+    const signature = labels.map(l => (l.alt || '') + '|' + l.src).join('\n');
+    if (existing && existing.dataset.signature === signature && existing.isConnected) return;
+    existing?.remove();
+    const anchor = labels[0].closest('.a-section') || labels[0].parentElement;
+    if (!anchor || !anchor.parentElement) return; // page is mid-rerender; the observer retries
+
+    const bar = document.createElement('div');
+    bar.id = 'arp-toolbar';
+    bar.dataset.signature = signature;
+
+    const { btn: print } = toolbarButton('arp-print-btn', PRINT_ICON, t('printButton'));
+    print.title = t('printTooltip');
+    print.onclick = printMinimal;
+    bar.appendChild(print);
+
+    const qrLabels = labels.filter(l => /QR/i.test(l.alt || ''));
+    qrLabels.forEach((l, i) => bar.appendChild(walletButton(l, qrLabels.length > 1 ? i + 1 : 0)));
+    // centred directly below the first label
+    anchor.parentElement.insertBefore(bar, anchor.nextSibling);
+}
+
+let pending;
+new MutationObserver(() => {
+    clearTimeout(pending);
+    pending = setTimeout(updateToolbar, 300);
+}).observe(document.documentElement, { childList: true, subtree: true });
+updateToolbar();
