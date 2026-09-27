@@ -69,9 +69,9 @@ After changes, run `npm run build` and reload the extension in `about:debugging`
 
 ## 📱 Google Wallet (QR-code returns)
 
-For "label free box free" returns Amazon shows a QR code instead of a label. The extension adds an **"In Google Wallet speichern"** button under it (not printed): it decodes the QR in the background and asks your own [`wallet-service`](wallet-service/README.md) to sign a Google Wallet pass with exactly that QR, the return number and the validity date.
+For "label free box free" returns Amazon shows a QR code instead of a label. The extension adds an **"In Google Wallet speichern"** button under it (not printed): it decodes the QR in the background and asks the shared [`wallet-service`](wallet-service/README.md) at `wallet.infraviored.com` to sign a Google Wallet pass with exactly that QR, the return number and the validity date. Nothing to configure.
 
-Setup: deploy `wallet-service`, then enter its URL (and token, if set) in the add-on's settings.
+Privacy: only the QR content, return number, carrier, validity date and the item title are sent to the service; it stores nothing.
 
 ---
 

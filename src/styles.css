@@ -126,9 +126,10 @@ table.a-bordered th {
 }
 
 .wallet-button {
-  display: block;
-  margin: 8px auto;
-  padding: 8px 16px;
+  position: fixed;
+  top: 10px;
+  z-index: 1000;
+  padding: 10px 20px;
   background: #1a73e8;
   color: #fff;
   border: none;

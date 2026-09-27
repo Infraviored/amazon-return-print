@@ -29,15 +29,16 @@ async function decodeQrFromUrl(url) {
   return String.fromCharCode(...code.binaryData);
 }
 
+// Shared pass-signing service for all users (source: wallet-service/).
+const WALLET_SERVICE_URL = 'https://wallet.infraviored.com';
+
 async function createWalletPass({ imageUrl, title }) {
-  const { walletServiceUrl, walletToken } = await chrome.storage.local.get(['walletServiceUrl', 'walletToken']);
-  if (!walletServiceUrl) throw new Error('Wallet-Dienst nicht eingerichtet (Add-on-Einstellungen)');
   const qr = await decodeQrFromUrl(imageUrl);
   const body = { qr, ...parseReturnQr(qr) };
   if (title) body.title = title.replace(/[<>]/g, '').trim().slice(0, 80);
-  const res = await fetch(walletServiceUrl.replace(/\/+$/, '') + '/pass', {
+  const res = await fetch(WALLET_SERVICE_URL + '/pass', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...(walletToken ? { authorization: 'Bearer ' + walletToken } : {}) },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
   const out = await res.json().catch(() => ({}));

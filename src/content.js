@@ -21,10 +21,11 @@ function createPrintButton() {
 }
 
 // "In Google Wallet" button for QR-code returns (hidden when printing)
-function createWalletButton(imageUrl, wrapper) {
+function createWalletButton(imageUrl, wrapper, number) {
+    const label = 'In Google Wallet speichern' + (number ? ' (' + number + ')' : '');
     const btn = document.createElement('button');
     btn.className = 'wallet-button';
-    btn.textContent = 'In Google Wallet speichern';
+    btn.textContent = label;
     btn.onclick = () => {
         const cell = wrapper.querySelector('table td');
         const title = cell ? cell.textContent.replace(/\s+/g, ' ').trim() : '';
@@ -33,7 +34,7 @@ function createWalletButton(imageUrl, wrapper) {
         chrome.runtime.sendMessage({ type: 'walletPass', imageUrl, title }, res => {
             btn.disabled = false;
             if (res && res.ok) {
-                btn.textContent = 'In Google Wallet speichern ✓';
+                btn.textContent = label + ' ✓';
             } else {
                 btn.textContent = 'Fehler: ' + ((res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || 'unbekannt');
             }
@@ -53,6 +54,7 @@ function processReturnLabelPage() {
 
     const printContainer = document.createElement('div');
     printContainer.id = 'print-container';
+    const walletTargets = []; // QR labels, get a Wallet button in the top-right toolbar
 
     mainLabelImages.forEach((mainLabelImg, index) => {
         const wrapper = document.createElement('div');
@@ -64,7 +66,7 @@ function processReturnLabelPage() {
         mainLabelContainer.appendChild(mainLabelImg.cloneNode(true));
         wrapper.appendChild(mainLabelContainer);
         if (/QR/i.test(mainLabelImg.alt || '')) {
-            mainLabelContainer.appendChild(createWalletButton(mainLabelImg.src, wrapper));
+            walletTargets.push({ imageUrl: mainLabelImg.src, wrapper });
         }
 
         // 2. Find and Add Item Table
@@ -192,6 +194,13 @@ function processReturnLabelPage() {
             // Current observer is on document.body, might need re-check.
         };
         document.body.appendChild(backButton);
+
+        // next to "Zurück": one Wallet button per QR label (numbered if there are several)
+        walletTargets.forEach((t, i) => {
+            const btn = createWalletButton(t.imageUrl, t.wrapper, walletTargets.length > 1 ? i + 1 : 0);
+            btn.style.right = (290 + i * 250) + 'px';
+            document.body.appendChild(btn);
+        });
     }
 }
 
