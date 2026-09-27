@@ -103,7 +103,9 @@ function main() {
     if (token && req.headers.authorization !== `Bearer ${token}`) return send(res, 401, { error: 'unauthorized' });
     if (!loadKey()) return send(res, 503, { error: 'wallet-service not configured (issuer id / key file missing)' });
 
-    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+    // Behind nginx, X-Real-IP is set by the proxy; X-Forwarded-For's first entry is
+    // client-controlled and would let callers dodge the rate limit.
+    const ip = req.headers['x-real-ip'] || req.socket.remoteAddress || '';
     const recent = (hits.get(ip) || []).filter(t => Date.now() - t < 3600_000);
     if (recent.length >= limit) return send(res, 429, { error: 'rate limit' });
 
