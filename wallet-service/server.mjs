@@ -8,12 +8,13 @@
 //
 // Env:
 //   WALLET_ISSUER_ID   numeric issuer ID from the Google Pay & Wallet Console
-//   WALLET_KEY_FILE    service account JSON key (needs access to the issuer)
+//   WALLET_KEY_FILE    service account JSON key (needs access to the issuer);
+//                      until both exist, /pass answers 503 and /health says configured:false
 //   API_TOKEN          optional; if set, requests need "Authorization: Bearer <token>"
 //   PORT               default 8787
 //   RATE_LIMIT         passes per IP per hour, default 20
 import { createHash, createSign } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 
 export function passPayload(issuerId, input, now = new Date()) {
@@ -72,13 +73,15 @@ export function validate(body) {
 }
 
 function main() {
-  const issuerId = process.env.WALLET_ISSUER_ID;
-  const keyFile = process.env.WALLET_KEY_FILE;
-  if (!issuerId || !keyFile) {
-    console.error('set WALLET_ISSUER_ID and WALLET_KEY_FILE');
-    process.exit(2);
-  }
-  const key = JSON.parse(readFileSync(keyFile, 'utf8'));
+  const issuerId = process.env.WALLET_ISSUER_ID || '';
+  const keyFile = process.env.WALLET_KEY_FILE || '';
+  // Loaded lazily, so the service can run (and answer 503) before the Google
+  // setup is done; dropping the key file in place activates it without a restart.
+  let key = null;
+  const loadKey = () => {
+    if (!key && issuerId && keyFile && existsSync(keyFile)) key = JSON.parse(readFileSync(keyFile, 'utf8'));
+    return key;
+  };
   const token = process.env.API_TOKEN || '';
   const limit = Number(process.env.RATE_LIMIT || 20);
   const hits = new Map(); // ip -> timestamps within the last hour
@@ -95,9 +98,10 @@ function main() {
 
   createServer((req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, {});
-    if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true });
+    if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, configured: Boolean(loadKey()) });
     if (req.method !== 'POST' || req.url !== '/pass') return send(res, 404, { error: 'not found' });
     if (token && req.headers.authorization !== `Bearer ${token}`) return send(res, 401, { error: 'unauthorized' });
+    if (!loadKey()) return send(res, 503, { error: 'wallet-service not configured (issuer id / key file missing)' });
 
     const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
     const recent = (hits.get(ip) || []).filter(t => Date.now() - t < 3600_000);
@@ -112,7 +116,7 @@ function main() {
       if (err) return send(res, 400, { error: err });
       recent.push(Date.now());
       hits.set(ip, recent);
-      const jwt = sign(passPayload(issuerId, body), key);
+      const jwt = sign(passPayload(issuerId, body), loadKey());
       send(res, 200, { saveUrl: `https://pay.google.com/gp/v/save/${jwt}` });
     });
   }).listen(Number(process.env.PORT || 8787), () => console.log('wallet-service listening on', process.env.PORT || 8787));

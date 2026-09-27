@@ -1,0 +1,21 @@
+# Server deployment: build from this directory, secrets next to the compose file.
+#   .env              WALLET_ISSUER_ID=..., API_TOKEN=...
+#   secrets/key.json  service account key (the service answers 503 until it exists)
+services:
+  wallet-service:
+    build: .
+    container_name: wallet-service
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - WALLET_KEY_FILE=/secrets/key.json
+      - PORT=8787
+      - TZ=Europe/Berlin
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      - proxy-network
+
+networks:
+  proxy-network:
+    external: true
