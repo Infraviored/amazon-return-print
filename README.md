@@ -1,7 +1,7 @@
 # Amazon Return Label Printer
 
 **Tired of wasting paper when printing Amazon return labels?**
-This Firefox add-on automatically **cleans up the Amazon.de return label page**, showing only what you actually need for printing – no clutter, no instructions, no multi-page mess.
+This Firefox and Chrome add-on automatically **cleans up the Amazon.de return label page**, showing only what you actually need for printing – no clutter, no instructions, no multi-page mess.
 
 👉 **Available on the Firefox Add-on Store:**
 [https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/](https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/)
@@ -35,27 +35,35 @@ This extension fixes that by showing only the **essential information**:
 
 * **Amazon.de** return label pages
 * Firefox Desktop
+* Chrome / Edge Desktop (load unpacked, see below)
 
 ---
 
 ## 🚀 Installation (Temporary for Development)
 
-1. Open Firefox and go to `about:debugging`
-2. Click **"This Firefox"** in the sidebar
-3. Click **"Load Temporary Add-on"**
-4. Select any file inside the extension folder (e.g. `manifest.json`)
+Build first: `npm install && npm run build`.
+
+**Firefox:** open `about:debugging`, click **"This Firefox"**, **"Load Temporary Add-on"** and select `build/firefox/manifest.json`.
+
+**Chrome / Edge:** open `chrome://extensions`, enable **Developer mode**, click **"Load unpacked"** and select `build/chrome/`.
 
 ---
 
 ## 🔧 Development
 
-Edit the following files to customize or improve functionality:
+One source tree, two browsers:
 
-* `content.js`: Core logic for modifying the page
-* `styles.css`: CSS rules for the cleaned-up view and print layout
-* `manifest.json`: Extension metadata
+* `src/content.js`: Core logic for modifying the page
+* `src/styles.css`: Print view styling
+* `manifests/base.json`: Shared manifest keys; `manifests/firefox.json` (Manifest V2) and `manifests/chrome.json` (Manifest V3) add the per-browser parts
 
-Reload the extension using the **"Reload"** button in `about:debugging`.
+```bash
+npm run build          # build/<browser>/ and dist/amazon-return-print-<browser>-<version>.zip
+npm run lint:firefox   # web-ext lint on build/firefox
+npm run check:chrome   # loads build/chrome in headless Chromium
+```
+
+After changes, run `npm run build` and reload the extension in `about:debugging` or `chrome://extensions`.
 
 ---
 

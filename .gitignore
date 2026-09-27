@@ -1,0 +1,6 @@
+build/
+dist/
+web-ext-artifacts/
+node_modules/
+.wt/
+amazon-return-print.zip
