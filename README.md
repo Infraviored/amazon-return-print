@@ -54,8 +54,11 @@ Build first: `npm install && npm run build`.
 
 One source tree, two browsers:
 
-* `src/content.js`: Core logic for modifying the page
-* `src/styles.css`: Print view styling
+* `src/content.js`: Buttons below the label, minimal print (hidden iframe)
+* `src/styles.css`: Button styling (scoped to the extension's own elements)
+* `src/wallet.js`, `src/background.js`, `src/jsQR.js`: QR decoding and the Wallet request, run in the background
+* `src-chrome/sw.js`: Chrome service worker entry that loads the background scripts
+* `wallet-service/`: the server that signs Google Wallet passes (see its README)
 * `manifests/base.json`: Shared manifest keys; `manifests/firefox.json` (Manifest V2) and `manifests/chrome.json` (Manifest V3) add the per-browser parts
 
 ```bash

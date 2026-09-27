@@ -67,6 +67,9 @@ export function validate(body) {
   const allowed = ['qr', 'returnId', 'carrier', 'deadline', 'title'];
   for (const k of Object.keys(body)) if (!allowed.includes(k)) return `unknown field ${k}`;
   if (typeof body.qr !== 'string' || !body.qr || body.qr.length > 500) return 'qr: 1-500 chars required';
+  // only DHL return QR codes ("RON|<shipment no>|..."), so the public endpoint
+  // cannot be used to sign passes carrying arbitrary links or text
+  if (!/^RON\|\d{8,20}\|/.test(body.qr)) return 'qr: not a DHL return code';
   for (const k of ['returnId', 'carrier', 'title']) {
     if (body[k] !== undefined && (typeof body[k] !== 'string' || body[k].length > 80 || /[<>]/.test(body[k]))) return `${k}: up to 80 plain chars`;
   }
@@ -124,6 +127,8 @@ function main() {
     const ip = req.headers['x-real-ip'] || req.socket.remoteAddress || '';
     const recent = (hits.get(ip) || []).filter(t => Date.now() - t < 3600_000);
     if (recent.length >= limit) return send(res, 429, { error: 'rate limit' });
+    recent.push(Date.now()); // every request counts, valid or not
+    hits.set(ip, recent);
 
     let raw = '', tooBig = false;
     req.on('data', c => {
@@ -137,8 +142,6 @@ function main() {
       try { body = JSON.parse(raw); } catch { return send(res, 400, { error: 'invalid JSON' }); }
       const err = validate(body);
       if (err) return send(res, 400, { error: err });
-      recent.push(Date.now());
-      hits.set(ip, recent);
       try {
         const jwt = sign(passPayload(issuerId, body), loadKey());
         send(res, 200, { saveUrl: `https://pay.google.com/gp/v/save/${jwt}` });

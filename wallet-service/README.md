@@ -21,7 +21,9 @@ docker run -d --name wallet-service -p 8787:8787 \
   wallet-service
 ```
 
-`API_TOKEN` is required; the extension sends it as a bearer token. To run without one (anyone can then mint passes under your issuer, limited only by the per-IP rate limit), set `ALLOW_PUBLIC=1` instead. Behind a reverse proxy, make it set `X-Real-IP`; the rate limit keys on it.
+The extension calls the shared instance at `https://wallet.infraviored.com` without a token, so that instance runs with `ALLOW_PUBLIC=1`. What limits abuse there: only DHL return QR codes (`RON|<number>|…`) are accepted, layout and card title are fixed, input is strictly validated, and every request counts against a per-IP limit (20/hour). Behind a reverse proxy, make it set `X-Real-IP`; the rate limit keys on it.
+
+For a private instance, set `API_TOKEN` instead: requests then need `Authorization: Bearer <token>`. The extension does not send one, so a private instance is only for your own clients.
 
 `docker-compose.yml` is the home-server variant: it expects `.env`, `secrets/` and the external `proxy-network`.
 
@@ -31,7 +33,7 @@ docker run -d --name wallet-service -p 8787:8787 \
 
 | field | required | |
 |---|---|---|
-| `qr` | yes | QR content, up to 500 chars |
+| `qr` | yes | DHL return QR content (`RON|<number>|…`), up to 500 chars |
 | `returnId` | no | shown on the pass and under the QR |
 | `carrier` | no | e.g. `DHL` |
 | `deadline` | no | `YYYY-MM-DD`; the pass expires after that day |

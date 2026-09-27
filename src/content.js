@@ -77,7 +77,8 @@ function printMinimal() {
     document.getElementById('arp-print-frame')?.remove();
     const frame = document.createElement('iframe');
     frame.id = 'arp-print-frame';
-    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+    // off-screen but rendered: visibility:hidden or a 0x0 frame can print blank (Firefox)
+    frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:1000px;border:0;opacity:0;pointer-events:none';
     document.body.appendChild(frame);
     const doc = frame.contentDocument;
     doc.open();
@@ -91,9 +92,13 @@ function printMinimal() {
     doc.body.appendChild(doc.importNode(view, true));
     const images = [...doc.images].map(img => img.complete ? null : new Promise(r => { img.onload = img.onerror = r; })).filter(Boolean);
     Promise.race([Promise.all(images), new Promise(r => setTimeout(r, 4000))]).then(() => {
+        // Chrome's print preview returns immediately: remove the frame only after
+        // printing, with a generous fallback
+        const done = () => frame.remove();
+        frame.contentWindow.addEventListener('afterprint', done);
+        setTimeout(done, 60000);
         frame.contentWindow.focus();
         frame.contentWindow.print();
-        setTimeout(() => frame.remove(), 1000);
     });
 }
 
@@ -137,10 +142,16 @@ function updateToolbar() {
     const labels = [...document.querySelectorAll(LABEL_SELECTOR)];
     const existing = document.getElementById('arp-toolbar');
     if (!labels.length) { existing?.remove(); return; }
-    if (existing) return;
+    // rebuild when labels change (e.g. Amazon loads a second package later)
+    const signature = labels.map(l => (l.alt || '') + '|' + l.src).join('\n');
+    if (existing && existing.dataset.signature === signature && existing.isConnected) return;
+    existing?.remove();
+    const anchor = labels[0].closest('.a-section') || labels[0].parentElement;
+    if (!anchor || !anchor.parentElement) return; // page is mid-rerender; the observer retries
 
     const bar = document.createElement('div');
     bar.id = 'arp-toolbar';
+    bar.dataset.signature = signature;
 
     const { btn: print } = toolbarButton('arp-print-btn', PRINT_ICON, 'Minimal drucken');
     print.title = 'Nur Etikett, Artikelliste und Übersicht drucken';
@@ -150,7 +161,6 @@ function updateToolbar() {
     const qrLabels = labels.filter(l => /QR/i.test(l.alt || ''));
     qrLabels.forEach((l, i) => bar.appendChild(walletButton(l, qrLabels.length > 1 ? i + 1 : 0)));
     // centred directly below the first label
-    const anchor = labels[0].closest('.a-section') || labels[0].parentElement;
     anchor.parentElement.insertBefore(bar, anchor.nextSibling);
 }
 

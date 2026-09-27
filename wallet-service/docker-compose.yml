@@ -1,5 +1,5 @@
 # Server deployment: build from this directory, secrets next to the compose file.
-#   .env              WALLET_ISSUER_ID=..., API_TOKEN=...
+#   .env              WALLET_ISSUER_ID=..., ALLOW_PUBLIC=1 (or API_TOKEN=... for a private instance)
 #   secrets/key.json  service account key (the service answers 503 until it exists)
 services:
   wallet-service:
