@@ -1,7 +1,9 @@
 # Amazon Return Label Printer
 
-**Tired of wasting paper when printing Amazon return labels?**
-This Firefox and Chrome add-on automatically **cleans up the Amazon.de return label page**, showing only what you actually need for printing – no clutter, no instructions, no multi-page mess.
+**Tired of wasting paper when printing Amazon return labels? Or of printing at all?**
+This Firefox and Chrome add-on puts two buttons right under your Amazon.de return label: **print only what matters** on one page, or **drop the return QR code straight into Google Wallet** and show it at the DHL counter from your phone.
+
+<p align="center"><img src="docs/screenshot.png" width="600" alt="Minimal drucken and Google Wallet buttons under an Amazon return QR code (demo QR)"></p>
 
 👉 **Available on the Firefox Add-on Store:**
 [https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/](https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/)
@@ -10,10 +12,9 @@ This Firefox and Chrome add-on automatically **cleans up the Amazon.de return la
 
 ## ✂️ What It Does
 
-* Extracts only the **DHL return label** and the **product description table**
-* Removes Amazon’s UI, instructions, and irrelevant text
-* Formats everything to fit neatly on **one A4 portrait page**
-* Adds a **“Print” button** for instant access
+* Leaves the Amazon page as it is and adds two buttons **directly below the label**
+* 🖨️ **Minimal drucken**: prints only the **return label or QR code**, the **item table** and the overview, on **one A4 portrait page**, no Amazon UI, no instructions
+* 📱 **Google Wallet**: for paperless "label free box free" returns, saves the **QR code as a Wallet pass** with return number, carrier and expiry date. One tap, no screenshots, no paper
 * Works with **multiple return labels** on one page
 
 ---
@@ -69,9 +70,15 @@ After changes, run `npm run build` and reload the extension in `about:debugging`
 
 ## 📱 Google Wallet (QR-code returns)
 
-For "label free box free" returns Amazon shows a QR code instead of a label. The extension adds an **"In Google Wallet speichern"** button under it (not printed): it decodes the QR in the background and asks the shared [`wallet-service`](wallet-service/README.md) at `wallet.infraviored.com` to sign a Google Wallet pass with exactly that QR, the return number and the validity date. Nothing to configure.
+For "label free box free" returns Amazon shows a QR code instead of a label. **Google Wallet** turns it into a pass on your phone:
 
-Privacy: only the QR content, return number, carrier, validity date and the item title are sent to the service; it stores nothing.
+1. The extension loads the QR image in the background and decodes it (the payload is kept byte for byte).
+2. It reads the DHL return number and expiry date from it.
+3. The shared [`wallet-service`](wallet-service/README.md) at `wallet.infraviored.com` signs a Google Wallet pass with exactly that QR code, and the "Save to Google Wallet" page opens.
+
+Nothing to configure. Privacy: only the QR content, return number, carrier, expiry date and the item title are sent to the service; it stores nothing.
+
+> The Wallet issuer is still in Google's demo mode, so for now only registered test accounts can save passes.
 
 ---
 
