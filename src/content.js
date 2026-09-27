@@ -1,5 +1,5 @@
-// Amazon return label pages: the page stays as it is. A small toolbar row
-// right above the first label offers "Minimal drucken" (prints only labels, item
+// Amazon return label pages: the page stays as it is. Two buttons centred
+// right below the first label offer "Minimal drucken" (prints only labels, item
 // table and overview) and, for QR-code returns, "Google Wallet".
 
 const LABEL_SELECTOR = 'img.return-label-image[alt="Rücksendeetikett"], img.return-label-image.cut-line-sign, img.return-label-image[alt*="QR"]';
@@ -141,10 +141,6 @@ function updateToolbar() {
 
     const bar = document.createElement('div');
     bar.id = 'arp-toolbar';
-    const title = document.createElement('div');
-    title.className = 'arp-title';
-    title.textContent = 'Rücksendung';
-    bar.appendChild(title);
 
     const { btn: print } = toolbarButton('arp-print-btn', PRINT_ICON, 'Minimal drucken');
     print.title = 'Nur Etikett, Artikelliste und Übersicht drucken';
@@ -153,9 +149,9 @@ function updateToolbar() {
 
     const qrLabels = labels.filter(l => /QR/i.test(l.alt || ''));
     qrLabels.forEach((l, i) => bar.appendChild(walletButton(l, qrLabels.length > 1 ? i + 1 : 0)));
-    // in the page flow, right above the first label's block
+    // centred directly below the first label
     const anchor = labels[0].closest('.a-section') || labels[0].parentElement;
-    anchor.parentElement.insertBefore(bar, anchor);
+    anchor.parentElement.insertBefore(bar, anchor.nextSibling);
 }
 
 let pending;

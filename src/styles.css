@@ -3,38 +3,30 @@
 #arp-toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  justify-content: center;
   gap: 10px;
-  margin: 12px 0;
-  padding: 10px 12px;
-  background: #f7fafa;
-  border: 1px solid #d5d9d9;
-  border-radius: 10px;
-  font: 13px/1.3 Arial, sans-serif;
-}
-
-#arp-toolbar .arp-title {
-  font-weight: bold;
-  color: #565959;
-  margin-right: 4px;
+  margin: 14px 0 18px;
 }
 
 #arp-toolbar .arp-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 8px;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 100px;
   cursor: pointer;
-  font: bold 13px Arial, sans-serif;
+  font: 13px Arial, sans-serif;
   white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5);
 }
 
-#arp-toolbar .arp-print-btn { background: #ffd814; color: #0f1111; }
+/* Amazon's own button look */
+#arp-toolbar .arp-print-btn { background: #ffd814; border: 1px solid #fcd200; color: #0f1111; }
 #arp-toolbar .arp-print-btn:hover { background: #f7ca00; }
-#arp-toolbar .arp-wallet { background: #1f1f1f; color: #fff; }
-#arp-toolbar .arp-wallet:hover { background: #3c3c3c; }
+/* dark pill, like Google's wallet buttons */
+#arp-toolbar .arp-wallet { background: #000; border: 1px solid #000; color: #fff; }
+#arp-toolbar .arp-wallet:hover { background: #333; }
 #arp-toolbar .arp-btn:disabled { opacity: 0.6; cursor: default; }
 
 /* The extension's own UI is never printed (printing uses a separate iframe). */
