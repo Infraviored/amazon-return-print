@@ -124,3 +124,18 @@ table.a-bordered th {
         display: none !important;
     }
 }
+
+.wallet-button {
+  display: block;
+  margin: 8px auto;
+  padding: 8px 16px;
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.wallet-button:disabled { opacity: 0.6; cursor: default; }
+@media print {
+  .wallet-button { display: none !important; }
+}

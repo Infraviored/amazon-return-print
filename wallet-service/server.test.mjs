@@ -18,6 +18,8 @@ test('signed JWT verifies and carries a QR pass', () => {
   assert.equal(obj.barcode.value, 'DHL:ABC123');
   assert.equal(obj.classId, '3388000000012345678.amazon_return_v1');
   assert.match(obj.id, /^3388000000012345678\.return_[0-9a-f]{24}$/);
+  assert.equal(obj.textModulesData.find(m => m.id === 'deadline').body, '15.10.2026');
+  assert.equal(obj.validTimeInterval.end.date, '2026-10-15T23:59:59');
 });
 
 test('same QR gives the same object id (re-saving updates, no duplicates)', () => {

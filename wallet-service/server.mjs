@@ -30,12 +30,12 @@ export function passPayload(issuerId, input, now = new Date()) {
     textModulesData: [
       input.carrier && { id: 'carrier', header: 'Versand', body: input.carrier },
       input.returnId && { id: 'return', header: 'Rücksendenummer', body: input.returnId },
-      input.deadline && { id: 'deadline', header: 'Rücksenden bis', body: input.deadline },
+      input.deadline && { id: 'deadline', header: 'Gültig bis', body: input.deadline.split('-').reverse().join('.') },
     ].filter(Boolean),
   };
   if (input.deadline) {
-    // keep the pass until the end of the deadline day
-    object.validTimeInterval = { end: { date: `${input.deadline}T23:59:59+01:00` } };
+    // keep the pass until the end of that day, in the user's local time (no offset)
+    object.validTimeInterval = { end: { date: `${input.deadline}T23:59:59` } };
   }
   return {
     iss: undefined, // filled by sign()

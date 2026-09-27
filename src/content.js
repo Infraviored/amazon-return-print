@@ -20,6 +20,29 @@ function createPrintButton() {
     return printButton;
 }
 
+// "In Google Wallet" button for QR-code returns (hidden when printing)
+function createWalletButton(imageUrl, wrapper) {
+    const btn = document.createElement('button');
+    btn.className = 'wallet-button';
+    btn.textContent = 'In Google Wallet speichern';
+    btn.onclick = () => {
+        const cell = wrapper.querySelector('table td');
+        const title = cell ? cell.textContent.replace(/\s+/g, ' ').trim() : '';
+        btn.disabled = true;
+        btn.textContent = 'Erstelle Pass…';
+        chrome.runtime.sendMessage({ type: 'walletPass', imageUrl, title }, res => {
+            btn.disabled = false;
+            if (res && res.ok) {
+                btn.textContent = 'In Google Wallet speichern';
+                window.open(res.saveUrl, '_blank', 'noopener');
+            } else {
+                btn.textContent = 'Fehler: ' + ((res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || 'unbekannt');
+            }
+        });
+    };
+    return btn;
+}
+
 // Function to process the return label page
 function processReturnLabelPage() {
     const mainLabelImages = document.querySelectorAll('img.return-label-image[alt="Rücksendeetikett"], img.return-label-image.cut-line-sign');
@@ -41,6 +64,9 @@ function processReturnLabelPage() {
         mainLabelContainer.className = 'a-section a-spacing-none a-text-center print-element';
         mainLabelContainer.appendChild(mainLabelImg.cloneNode(true));
         wrapper.appendChild(mainLabelContainer);
+        if (/QR/i.test(mainLabelImg.alt || '')) {
+            mainLabelContainer.appendChild(createWalletButton(mainLabelImg.src, wrapper));
+        }
 
         // 2. Find and Add Item Table
         // Assumes table is a sibling to the mainLabelImg's container or a sibling to a few parents up.

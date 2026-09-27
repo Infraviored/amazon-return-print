@@ -1,3 +1,15 @@
 {
-  "manifest_version": 2
+  "manifest_version": 2,
+  "permissions": [
+    "activeTab",
+    "storage",
+    "https://trans-qrcode-images-eu.s3.eu-west-1.amazonaws.com/*"
+  ],
+  "background": {
+    "scripts": [
+      "jsQR.js",
+      "wallet.js",
+      "background.js"
+    ]
+  }
 }

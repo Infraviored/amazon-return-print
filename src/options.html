@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { font: 14px system-ui, sans-serif; margin: 16px; min-width: 360px; }
+  label { display: block; margin: 10px 0 4px; font-weight: 600; }
+  input { width: 100%; box-sizing: border-box; padding: 6px 8px; }
+  small { color: #666; }
+  #status { margin-top: 10px; color: #2a7d2a; }
+</style>
+<h3>Google Wallet</h3>
+<small>Adresse deines wallet-service (siehe README im Repository). Leer lassen, wenn du Wallet nicht nutzt.</small>
+<label for="url">Dienst-URL</label>
+<input id="url" placeholder="https://wallet.example.com">
+<label for="token">Token (optional)</label>
+<input id="token" type="password">
+<p><button id="save">Speichern</button></p>
+<div id="status"></div>
+<script src="options.js"></script>
