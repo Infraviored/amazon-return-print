@@ -10,10 +10,11 @@
 //   WALLET_ISSUER_ID   numeric issuer ID from the Google Pay & Wallet Console
 //   WALLET_KEY_FILE    service account JSON key (needs access to the issuer);
 //                      until both exist, /pass answers 503 and /health says configured:false
-//   API_TOKEN          optional; if set, requests need "Authorization: Bearer <token>"
+//   API_TOKEN          requests need "Authorization: Bearer <token>"
+//   ALLOW_PUBLIC=1     run without API_TOKEN (anyone can mint passes; rate limit only)
 //   PORT               default 8787
 //   RATE_LIMIT         passes per IP per hour, default 20
-import { createHash, createSign } from 'node:crypto';
+import { createHash, createSign, timingSafeEqual } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 
@@ -42,6 +43,7 @@ export function passPayload(issuerId, input, now = new Date()) {
     iss: undefined, // filled by sign()
     aud: 'google',
     typ: 'savetowallet',
+    origins: [],
     iat: Math.floor(now.getTime() / 1000),
     payload: {
       genericClasses: [{ id: classId }],
@@ -79,12 +81,26 @@ function main() {
   // setup is done; dropping the key file in place activates it without a restart.
   let key = null;
   const loadKey = () => {
-    if (!key && issuerId && keyFile && existsSync(keyFile)) key = JSON.parse(readFileSync(keyFile, 'utf8'));
+    if (!key && issuerId && keyFile && existsSync(keyFile)) {
+      try { key = JSON.parse(readFileSync(keyFile, 'utf8')); } catch (e) { console.error('key file unreadable:', e.message); }
+    }
     return key;
   };
   const token = process.env.API_TOKEN || '';
+  if (!token && process.env.ALLOW_PUBLIC !== '1') {
+    console.error('set API_TOKEN (or ALLOW_PUBLIC=1 to accept anyone)');
+    process.exit(2);
+  }
+  const tokenOk = header => {
+    if (!token) return true;
+    const a = Buffer.from(String(header || '')), b = Buffer.from('Bearer ' + token);
+    return a.length === b.length && timingSafeEqual(a, b);
+  };
   const limit = Number(process.env.RATE_LIMIT || 20);
   const hits = new Map(); // ip -> timestamps within the last hour
+  setInterval(() => { // drop IPs with no request in the last hour
+    for (const [ip, ts] of hits) if (!ts.some(t => Date.now() - t < 3600_000)) hits.delete(ip);
+  }, 600_000).unref();
 
   const send = (res, code, obj) => {
     res.writeHead(code, {
@@ -100,7 +116,7 @@ function main() {
     if (req.method === 'OPTIONS') return send(res, 204, {});
     if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, configured: Boolean(loadKey()) });
     if (req.method !== 'POST' || req.url !== '/pass') return send(res, 404, { error: 'not found' });
-    if (token && req.headers.authorization !== `Bearer ${token}`) return send(res, 401, { error: 'unauthorized' });
+    if (!tokenOk(req.headers.authorization)) return send(res, 401, { error: 'unauthorized' });
     if (!loadKey()) return send(res, 503, { error: 'wallet-service not configured (issuer id / key file missing)' });
 
     // Behind nginx, X-Real-IP is set by the proxy; X-Forwarded-For's first entry is
@@ -109,17 +125,27 @@ function main() {
     const recent = (hits.get(ip) || []).filter(t => Date.now() - t < 3600_000);
     if (recent.length >= limit) return send(res, 429, { error: 'rate limit' });
 
-    let raw = '';
-    req.on('data', c => { raw += c; if (raw.length > 4096) req.destroy(); });
+    let raw = '', tooBig = false;
+    req.on('data', c => {
+      if (tooBig) return;
+      raw += c;
+      if (raw.length > 4096) { tooBig = true; send(res, 413, { error: 'body too large' }); req.destroy(); }
+    });
     req.on('end', () => {
+      if (tooBig) return;
       let body;
       try { body = JSON.parse(raw); } catch { return send(res, 400, { error: 'invalid JSON' }); }
       const err = validate(body);
       if (err) return send(res, 400, { error: err });
       recent.push(Date.now());
       hits.set(ip, recent);
-      const jwt = sign(passPayload(issuerId, body), loadKey());
-      send(res, 200, { saveUrl: `https://pay.google.com/gp/v/save/${jwt}` });
+      try {
+        const jwt = sign(passPayload(issuerId, body), loadKey());
+        send(res, 200, { saveUrl: `https://pay.google.com/gp/v/save/${jwt}` });
+      } catch (e) {
+        console.error('signing failed:', e.message);
+        send(res, 500, { error: 'signing failed' });
+      }
     });
   }).listen(Number(process.env.PORT || 8787), () => console.log('wallet-service listening on', process.env.PORT || 8787));
 }

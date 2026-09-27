@@ -42,5 +42,8 @@ async function createWalletPass({ imageUrl, title }) {
   });
   const out = await res.json().catch(() => ({}));
   if (!res.ok || !out.saveUrl) throw new Error('Wallet-Dienst: ' + (out.error || res.status));
+  // open from here: the content script's click activation has expired by now,
+  // so a window.open there would hit the popup blocker
+  await chrome.tabs.create({ url: out.saveUrl });
   return out.saveUrl;
 }

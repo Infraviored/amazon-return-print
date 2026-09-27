@@ -21,7 +21,9 @@ docker run -d --name wallet-service -p 8787:8787 \
   wallet-service
 ```
 
-`API_TOKEN` is optional. Set it while the service is only for you; the extension then sends it as a bearer token.
+`API_TOKEN` is required; the extension sends it as a bearer token. To run without one (anyone can then mint passes under your issuer, limited only by the per-IP rate limit), set `ALLOW_PUBLIC=1` instead. Behind a reverse proxy, make it set `X-Real-IP`; the rate limit keys on it.
+
+`docker-compose.yml` is the home-server variant: it expects `.env`, `secrets/` and the external `proxy-network`.
 
 ## API
 

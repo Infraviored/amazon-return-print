@@ -13,6 +13,7 @@ test('signed JWT verifies and carries a QR pass', () => {
   const claims = JSON.parse(Buffer.from(p, 'base64url'));
   assert.equal(claims.iss, key.client_email);
   assert.equal(claims.typ, 'savetowallet');
+  assert.deepEqual(claims.origins, []);
   const obj = claims.payload.genericObjects[0];
   assert.equal(obj.barcode.type, 'QR_CODE');
   assert.equal(obj.barcode.value, 'DHL:ABC123');

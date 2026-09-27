@@ -33,8 +33,7 @@ function createWalletButton(imageUrl, wrapper) {
         chrome.runtime.sendMessage({ type: 'walletPass', imageUrl, title }, res => {
             btn.disabled = false;
             if (res && res.ok) {
-                btn.textContent = 'In Google Wallet speichern';
-                window.open(res.saveUrl, '_blank', 'noopener');
+                btn.textContent = 'In Google Wallet speichern ✓';
             } else {
                 btn.textContent = 'Fehler: ' + ((res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || 'unbekannt');
             }
@@ -45,7 +44,7 @@ function createWalletButton(imageUrl, wrapper) {
 
 // Function to process the return label page
 function processReturnLabelPage() {
-    const mainLabelImages = document.querySelectorAll('img.return-label-image[alt="Rücksendeetikett"], img.return-label-image.cut-line-sign');
+    const mainLabelImages = document.querySelectorAll('img.return-label-image[alt="Rücksendeetikett"], img.return-label-image.cut-line-sign, img.return-label-image[alt*="QR"]');
 
     if (isProcessed || mainLabelImages.length === 0) {
         return;
