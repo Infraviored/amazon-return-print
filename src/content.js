@@ -1,232 +1,140 @@
-// Track if we've already processed the page
-let isProcessed = false;
+// Amazon return label pages: the page stays as it is. A small toolbar box in
+// the top-right corner offers "Minimal drucken" (prints only labels, item
+// table and overview) and, for QR-code returns, "Google Wallet".
 
-// Function to create print button
-function createPrintButton() {
-    const printButton = document.createElement('button');
-    printButton.textContent = 'Drucken (Print)';
-    printButton.style.position = 'fixed';
-    printButton.style.top = '10px';
-    printButton.style.right = '10px';
-    printButton.style.padding = '10px 20px';
-    printButton.style.backgroundColor = '#FF9900';
-    printButton.style.border = 'none';
-    printButton.style.borderRadius = '4px';
-    printButton.style.cursor = 'pointer';
-    printButton.style.zIndex = '1000';
-    printButton.onclick = () => {
-        window.print();
-    };
-    return printButton;
+const LABEL_SELECTOR = 'img.return-label-image[alt="Rücksendeetikett"], img.return-label-image.cut-line-sign, img.return-label-image[alt*="QR"]';
+
+// Item table that belongs to a label: a sibling of the label's container, up to 3 levels up.
+function findItemTable(labelImg) {
+    let el = labelImg.parentElement;
+    for (let i = 0; i < 3 && el; i++) {
+        for (let sib = el.nextElementSibling; sib; sib = sib.nextElementSibling) {
+            if (sib.matches('table.a-bordered')) return sib;
+            const child = sib.querySelector('table.a-bordered');
+            if (child) return child;
+        }
+        el = el.parentElement;
+    }
+    return null;
 }
 
-// "In Google Wallet" button for QR-code returns (hidden when printing)
-function createWalletButton(imageUrl, wrapper, number) {
-    const label = 'In Google Wallet speichern' + (number ? ' (' + number + ')' : '');
+// "Rücksendungsübersicht" image for a label: first in the label's section and the
+// following sections, then anywhere in the surrounding return block.
+function findOverviewImage(labelImg) {
+    const pick = imgs => {
+        let found = null;
+        for (const img of imgs) {
+            if (img === labelImg) continue;
+            if (img.classList.contains('return-label-image')) return img;
+            found = found || img;
+        }
+        return found;
+    };
+    let section = labelImg.closest('.a-section:not(.a-spacing-none):not(.a-text-center)') || labelImg.closest('.a-section');
+    for (let i = 0; i < 10 && section; i++) {
+        const img = pick(section.querySelectorAll('img[alt="Rücksendungsübersicht"]'));
+        if (img) return img;
+        do { section = section.nextElementSibling; } while (section && !section.matches('.a-section, .a-box'));
+    }
+    const scope = labelImg.closest('div[id^="return-package-"], div.return-shipment, div.a-box, body');
+    return scope ? pick(scope.querySelectorAll('img[alt="Rücksendungsübersicht"]')) : null;
+}
+
+function buildPrintView(labels) {
+    const view = document.createElement('div');
+    view.id = 'arp-print';
+    labels.forEach(label => {
+        const item = document.createElement('div');
+        item.className = 'arp-item';
+        const add = node => { const box = document.createElement('div'); box.className = 'arp-part'; box.appendChild(node.cloneNode(true)); item.appendChild(box); };
+        add(label);
+        const table = findItemTable(label);
+        if (table) add(table);
+        const overview = findOverviewImage(label);
+        if (overview) add(overview);
+        view.appendChild(item);
+    });
+    return view;
+}
+
+// Only the print view is printed; it exists just for the print dialog.
+function printMinimal() {
+    const labels = [...document.querySelectorAll(LABEL_SELECTOR)];
+    if (!labels.length) return;
+    document.getElementById('arp-print')?.remove();
+    document.body.appendChild(buildPrintView(labels));
+    document.documentElement.classList.add('arp-printing');
+    const cleanup = () => {
+        document.documentElement.classList.remove('arp-printing');
+        document.getElementById('arp-print')?.remove();
+        window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+}
+
+const WALLET_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19 7V6a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-8a3 3 0 0 0-3-3zM5 5h11a1 1 0 0 1 1 1v1H5a1 1 0 0 1 0-2zm15 11h-3a2 2 0 0 1 0-4h3zm0-6h-3a4 4 0 0 0 0 8h3v0a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8.83A3 3 0 0 0 5 9h14a1 1 0 0 1 1 1z"/><circle fill="currentColor" cx="17" cy="14" r="1"/></svg>';
+const PRINT_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M18 7V3H6v4H5a3 3 0 0 0-3 3v6h4v5h12v-5h4v-6a3 3 0 0 0-3-3zM8 5h8v2H8zm8 14H8v-5h8zm4-5h-2v-2H6v2H4v-4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1z"/></svg>';
+
+function toolbarButton(cls, icon, text) {
     const btn = document.createElement('button');
-    btn.className = 'wallet-button';
-    btn.textContent = label;
+    btn.className = 'arp-btn ' + cls;
+    btn.innerHTML = icon; // constant SVG markup
+    const label = document.createElement('span');
+    label.textContent = text;
+    btn.appendChild(label);
+    return { btn, label };
+}
+
+function walletButton(labelImg, number) {
+    const text = 'Google Wallet' + (number ? ' (' + number + ')' : '');
+    const { btn, label } = toolbarButton('arp-wallet', WALLET_ICON, text);
+    btn.title = 'QR-Code als Pass in Google Wallet speichern';
     btn.onclick = () => {
-        const cell = wrapper.querySelector('table td');
+        const cell = findItemTable(labelImg)?.querySelector('td');
         const title = cell ? cell.textContent.replace(/\s+/g, ' ').trim() : '';
         btn.disabled = true;
-        btn.textContent = 'Erstelle Pass…';
-        chrome.runtime.sendMessage({ type: 'walletPass', imageUrl, title }, res => {
+        label.textContent = 'Erstelle Pass…';
+        chrome.runtime.sendMessage({ type: 'walletPass', imageUrl: labelImg.src, title }, res => {
             btn.disabled = false;
             if (res && res.ok) {
-                btn.textContent = label + ' ✓';
+                label.textContent = text + ' ✓';
             } else {
-                btn.textContent = 'Fehler: ' + ((res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || 'unbekannt');
+                label.textContent = 'Fehler';
+                btn.title = (res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || 'unbekannter Fehler';
             }
         });
     };
     return btn;
 }
 
-// Function to process the return label page
-function processReturnLabelPage() {
-    const mainLabelImages = document.querySelectorAll('img.return-label-image[alt="Rücksendeetikett"], img.return-label-image.cut-line-sign, img.return-label-image[alt*="QR"]');
+// Add the toolbar once labels are on the page; remove it if they disappear.
+function updateToolbar() {
+    const labels = [...document.querySelectorAll(LABEL_SELECTOR)];
+    const existing = document.getElementById('arp-toolbar');
+    if (!labels.length) { existing?.remove(); return; }
+    if (existing) return;
 
-    if (isProcessed || mainLabelImages.length === 0) {
-        return;
-    }
-    isProcessed = true;
+    const bar = document.createElement('div');
+    bar.id = 'arp-toolbar';
+    const title = document.createElement('div');
+    title.className = 'arp-title';
+    title.textContent = 'Rücksendung';
+    bar.appendChild(title);
 
-    const printContainer = document.createElement('div');
-    printContainer.id = 'print-container';
-    const walletTargets = []; // QR labels, get a Wallet button in the top-right toolbar
+    const { btn: print } = toolbarButton('arp-print-btn', PRINT_ICON, 'Minimal drucken');
+    print.title = 'Nur Etikett, Artikelliste und Übersicht drucken';
+    print.onclick = printMinimal;
+    bar.appendChild(print);
 
-    mainLabelImages.forEach((mainLabelImg, index) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'return-wrapper';
-
-        // 1. Add Main Label Image
-        const mainLabelContainer = document.createElement('div');
-        mainLabelContainer.className = 'a-section a-spacing-none a-text-center print-element';
-        mainLabelContainer.appendChild(mainLabelImg.cloneNode(true));
-        wrapper.appendChild(mainLabelContainer);
-        if (/QR/i.test(mainLabelImg.alt || '')) {
-            walletTargets.push({ imageUrl: mainLabelImg.src, wrapper });
-        }
-
-        // 2. Find and Add Item Table
-        // Assumes table is a sibling to the mainLabelImg's container or a sibling to a few parents up.
-        let currentElement = mainLabelImg.parentElement;
-        let itemTable = null;
-        for (let i = 0; i < 3 && currentElement; i++) { // Check current element's siblings then parent's siblings
-            let sibling = currentElement.nextElementSibling;
-            while (sibling) {
-                if (sibling.matches('table.a-bordered')) {
-                    itemTable = sibling;
-                    break;
-                }
-                // Check if table is a child of sibling (e.g. if sibling is a wrapper div)
-                const childTable = sibling.querySelector('table.a-bordered');
-                if(childTable){
-                    itemTable = childTable;
-                    break;
-                }
-                sibling = sibling.nextElementSibling;
-            }
-            if (itemTable) break;
-            currentElement = currentElement.parentElement;
-        }
-
-        if (itemTable) {
-            const tableContainer = document.createElement('div');
-            tableContainer.className = 'print-element';
-            tableContainer.appendChild(itemTable.cloneNode(true));
-            wrapper.appendChild(tableContainer);
-        }
-
-        // 3. Find and Add Overview Image (Rücksendungsübersicht)
-        let overviewImage = null;
-
-        // Attempt 1: Search in the main label's containing section and its subsequent siblings.
-        // Try to get a block-level .a-section, not the immediate image wrapper.
-        let currentSearchElement = mainLabelImg.closest('.a-section:not(.a-spacing-none):not(.a-text-center)');
-        if (!currentSearchElement) { // Fallback if the specific selector fails
-            currentSearchElement = mainLabelImg.closest('.a-section');
-        }
-
-        for (let i = 0; i < 10 && currentSearchElement; i++) { // Check current and up to 9 siblings
-            const imgs = currentSearchElement.querySelectorAll('img[alt="Rücksendungsübersicht"]');
-            for (const img of imgs) {
-                if (!img.isSameNode(mainLabelImg)) {
-                    if (img.classList.contains('return-label-image')) { // Prefer with class
-                        overviewImage = img;
-                        break;
-                    }
-                    if (!overviewImage) { // Take first one found if no preferred yet
-                        overviewImage = img;
-                    }
-                }
-            }
-            if (overviewImage && overviewImage.classList.contains('return-label-image')) {
-                break; // Found a preferred image, stop searching siblings
-            }
-            if (overviewImage && i > 0) {
-                 // Found a non-preferred one in a sibling, good enough if no preferred is found later in this sibling scan
-            }
-
-            currentSearchElement = currentSearchElement.nextElementSibling;
-            // Ensure next element is a plausible container (e.g., .a-section or .a-box)
-            while (currentSearchElement && !currentSearchElement.matches('.a-section, .a-box')) {
-                currentSearchElement = currentSearchElement.nextElementSibling;
-            }
-        }
-
-        // Attempt 2: Fallback to a broader scope if not found via sibling search
-        if (!overviewImage) {
-            const broaderScope = mainLabelImg.closest('div[id^="return-package-"], div.return-shipment, div.a-box, body');
-            if (broaderScope) {
-                const imgs = broaderScope.querySelectorAll('img[alt="Rücksendungsübersicht"]');
-                for (const img of imgs) {
-                    if (!img.isSameNode(mainLabelImg)) {
-                        if (img.classList.contains('return-label-image')) {
-                            overviewImage = img;
-                            break;
-                        }
-                        if (!overviewImage) {
-                            overviewImage = img;
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (overviewImage) {
-            const overviewContainer = document.createElement('div');
-            overviewContainer.className = 'a-section a-spacing-none a-text-center print-element'; // Consistent class for styling
-            overviewContainer.appendChild(overviewImage.cloneNode(true));
-            wrapper.appendChild(overviewContainer);
-        }
-
-        if (mainLabelImages.length > 1 && index < mainLabelImages.length - 1) {
-            wrapper.style.pageBreakAfter = 'always';
-            wrapper.style.marginBottom = '20px'; // For visual separation on screen if multiple items
-        }
-        printContainer.appendChild(wrapper);
-    });
-
-    if (printContainer.children.length > 0) {
-        const originalBodyHTML = document.body.innerHTML;
-        document.body.innerHTML = '';
-        document.body.appendChild(printContainer);
-        document.body.appendChild(createPrintButton());
-
-        const backButton = document.createElement('button');
-        backButton.textContent = 'Zurück (Back)';
-        backButton.style.position = 'fixed';
-        backButton.style.top = '10px';
-        backButton.style.right = '150px';
-        backButton.style.padding = '10px 20px';
-        backButton.style.backgroundColor = '#f0f0f0';
-        backButton.style.border = '1px solid #ddd';
-        backButton.style.borderRadius = '4px';
-        backButton.style.cursor = 'pointer';
-        backButton.style.zIndex = '1000';
-        backButton.onclick = () => {
-            document.body.innerHTML = originalBodyHTML;
-            isProcessed = false; 
-            // Re-attach observer if needed, or ensure it's robust to this reset
-            // For simplicity, full page reload might be an option or re-init observer if it's disconnected.
-            // Current observer is on document.body, might need re-check.
-        };
-        document.body.appendChild(backButton);
-
-        // next to "Zurück": one Wallet button per QR label (numbered if there are several)
-        walletTargets.forEach((t, i) => {
-            const btn = createWalletButton(t.imageUrl, t.wrapper, walletTargets.length > 1 ? i + 1 : 0);
-            btn.style.right = (290 + i * 250) + 'px';
-            document.body.appendChild(btn);
-        });
-    }
+    const qrLabels = labels.filter(l => /QR/i.test(l.alt || ''));
+    qrLabels.forEach((l, i) => bar.appendChild(walletButton(l, qrLabels.length > 1 ? i + 1 : 0)));
+    document.body.appendChild(bar);
 }
 
-function initObserver() {
-    // Debounced processing for mutations
-    let mutationTimeout;
-    const observer = new MutationObserver(() => {
-        if (document.readyState === 'complete' && !isProcessed) {
-            clearTimeout(mutationTimeout);
-            mutationTimeout = setTimeout(processReturnLabelPage, 500);
-        }
-    });
-
-    // Observe changes to the body and its children, as content might be loaded dynamically
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(processReturnLabelPage, 500); // Initial attempt
-        initObserver(); // Setup observer for dynamic changes
-    });
-} else {
-    setTimeout(processReturnLabelPage, 500); // Initial attempt for already loaded pages
-    initObserver(); // Setup observer for dynamic changes
-}
+let pending;
+new MutationObserver(() => {
+    clearTimeout(pending);
+    pending = setTimeout(updateToolbar, 300);
+}).observe(document.documentElement, { childList: true, subtree: true });
+updateToolbar();
