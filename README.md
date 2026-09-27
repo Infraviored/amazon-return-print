@@ -3,7 +3,16 @@
 **Tired of wasting paper when printing Amazon return labels? Or of printing at all?**
 This Firefox and Chrome add-on puts two buttons right under your Amazon.de return label: **print only what matters** on one page, or **drop the return QR code straight into Google Wallet** and show it at the DHL counter from your phone.
 
-<p align="center"><img src="docs/screenshot.png" width="600" alt="Minimal drucken and Google Wallet buttons under an Amazon return QR code (demo QR)"></p>
+<p align="center"><img src="docs/1-buttons.png" width="700" alt="Two buttons under the Amazon return QR code: Minimal drucken and Google Wallet"></p>
+
+<table>
+<tr>
+<td align="center" width="50%"><img src="docs/2-minimal-print.png" alt="Print preview: only the QR code and the item table on one page"><br><b>Minimal drucken</b>: one page, just what the counter needs</td>
+<td align="center" width="50%"><img src="docs/3-google-wallet.png" alt="The return QR code saved as a Google Wallet pass"><br><b>Google Wallet</b>: the return QR code as a pass on your phone</td>
+</tr>
+</table>
+
+<sub>Real screenshots from amazon.de; QR codes and return numbers are pixelated.</sub>
 
 👉 **Available on the Firefox Add-on Store:**
 [https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/](https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/)
