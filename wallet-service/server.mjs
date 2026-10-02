@@ -117,6 +117,10 @@ function main() {
 
   createServer((req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, {});
+    if (req.method === 'GET' && req.url === '/privacy') {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+      return res.end(PRIVACY_HTML);
+    }
     if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, configured: Boolean(loadKey()) });
     if (req.method !== 'POST' || req.url !== '/pass') return send(res, 404, { error: 'not found' });
     if (!tokenOk(req.headers.authorization)) return send(res, 401, { error: 'unauthorized' });
@@ -152,5 +156,38 @@ function main() {
     });
   }).listen(Number(process.env.PORT || 8787), () => console.log('wallet-service listening on', process.env.PORT || 8787));
 }
+
+// Served at /privacy; linked from the Chrome Web Store listing and the Google Wallet issuer profile.
+export const PRIVACY_HTML = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy Policy – Amazon Return Label Printer</title>
+<style>body{font:16px/1.6 system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 16px;color:#222}h2{margin-top:2rem}</style>
+</head><body>
+<h1>Privacy Policy</h1>
+<p>This policy covers the browser extension <b>Amazon Return Label Printer</b> and its pass-signing service at wallet.infraviored.com.</p>
+<h2>Minimal print</h2>
+<p>Printing runs entirely in your browser. No data leaves your device.</p>
+<h2>Google Wallet</h2>
+<p>Only when you click the Google Wallet button, the extension sends these fields to wallet.infraviored.com:
+the return QR code content, the return number, the carrier, the expiry date and the item title.
+The service uses them once to sign a Google Wallet pass and returns a link to Google's "Save to Google Wallet" page.
+It does not store, log or share this data, and it sets no cookies. Your IP address is kept in memory for at most one hour for rate limiting, and the web server's standard access log records IP address, time and requested URL (never the pass data).</p>
+<p>When you save the pass, Google processes it under the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.</p>
+<h2>No tracking</h2>
+<p>The extension has no analytics, no ads and no accounts. It does not sell or transfer data to third parties.</p>
+<h2>Contact</h2>
+<p>Questions: <a href="https://github.com/Infraviored/amazon-return-print/issues">github.com/Infraviored/amazon-return-print/issues</a></p>
+<hr>
+<h1 lang="de">Datenschutzerklärung</h1>
+<div lang="de">
+<p>Gilt für die Browser-Extension <b>Amazon Return Label Printer</b> und ihren Signierdienst unter wallet.infraviored.com.</p>
+<p><b>Minimal drucken</b> läuft komplett im Browser. Es verlassen keine Daten dein Gerät.</p>
+<p><b>Google Wallet:</b> Nur wenn du auf den Wallet-Button klickst, schickt die Extension QR-Inhalt, Rücksendenummer, Versanddienst, Ablaufdatum und Artikeltitel an wallet.infraviored.com.
+Der Dienst signiert damit einmalig einen Google-Wallet-Pass und gibt den Link zur Google-Speicherseite zurück. Er speichert, protokolliert und teilt nichts und setzt keine Cookies. Deine IP-Adresse liegt höchstens eine Stunde im Arbeitsspeicher für die Ratenbegrenzung; das normale Zugriffsprotokoll des Webservers enthält IP-Adresse, Zeit und aufgerufene URL (nie die Pass-Daten).</p>
+<p>Beim Speichern verarbeitet Google den Pass nach der <a href="https://policies.google.com/privacy?hl=de">Google-Datenschutzerklärung</a>.</p>
+<p>Kein Tracking, keine Werbung, keine Konten, keine Weitergabe an Dritte. Fragen über die GitHub-Issues oben.</p>
+</div>
+</body></html>
+`;
 
 if (import.meta.url === `file://${process.argv[1]}`) main();

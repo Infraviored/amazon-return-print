@@ -3,7 +3,7 @@
     "message": "Amazon Return Label Printer"
   },
   "extDescription": {
-    "message": "Adds two buttons to Amazon.de return pages: print only the return label and item list on one page, or save the return QR code to Google Wallet."
+    "message": "Amazon returns: print only the label and item list on one page, or save the return QR code to Google Wallet."
   },
   "printButton": {
     "message": "Minimal print"

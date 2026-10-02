@@ -3,7 +3,7 @@
     "message": "Amazon Return Label Printer"
   },
   "extDescription": {
-    "message": "Fügt auf Amazon.de-Rücksendeseiten zwei Buttons hinzu: nur Etikett und Artikelliste auf einer Seite drucken oder den Rücksende-QR-Code in Google Wallet speichern."
+    "message": "Amazon-Rücksendung: nur Etikett und Artikelliste auf einer Seite drucken oder den Rücksende-QR-Code in Google Wallet speichern."
   },
   "printButton": {
     "message": "Minimal drucken"
