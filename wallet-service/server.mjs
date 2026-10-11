@@ -91,35 +91,31 @@ export function validate(body) {
   return null;
 }
 
-function main() {
+export function loadPages(publicDir = PUBLIC_DIR) {
   const pages = new Map();
   for (const [path, [file, type]] of Object.entries(PAGES)) {
-    const f = join(PUBLIC_DIR, file);
+    const f = join(publicDir, file);
     if (existsSync(f)) pages.set(path, [readFileSync(f), type]);
     else console.error('missing public file:', file);
   }
-  const issuerId = process.env.WALLET_ISSUER_ID || '';
-  const keyFile = process.env.WALLET_KEY_FILE || '';
-  // Loaded lazily, so the service can run (and answer 503) before the Google
-  // setup is done; dropping the key file in place activates it without a restart.
-  let key = null;
-  const loadKey = () => {
-    if (!key && issuerId && keyFile && existsSync(keyFile)) {
-      try { key = JSON.parse(readFileSync(keyFile, 'utf8')); } catch (e) { console.error('key file unreadable:', e.message); }
-    }
-    return key;
-  };
-  const token = process.env.API_TOKEN || '';
-  if (!token && process.env.ALLOW_PUBLIC !== '1') {
-    console.error('set API_TOKEN (or ALLOW_PUBLIC=1 to accept anyone)');
-    process.exit(2);
-  }
+  const privacyBuf = Buffer.from(PRIVACY_HTML);
+  pages.set('/privacy', [privacyBuf, 'text/html; charset=utf-8']);
+  pages.set('/datenschutz', [privacyBuf, 'text/html; charset=utf-8']);
+  return pages;
+}
+
+export function createHandler({
+  pages = loadPages(),
+  issuerId = '',
+  loadKey = () => null,
+  token = '',
+  limit = 20,
+} = {}) {
   const tokenOk = header => {
     if (!token) return true;
     const a = Buffer.from(String(header || '')), b = Buffer.from('Bearer ' + token);
     return a.length === b.length && timingSafeEqual(a, b);
   };
-  const limit = Number(process.env.RATE_LIMIT || 20);
   const hits = new Map(); // ip -> timestamps within the last hour
   setInterval(() => { // drop IPs with no request in the last hour
     for (const [ip, ts] of hits) if (!ts.some(t => Date.now() - t < 3600_000)) hits.delete(ip);
@@ -135,19 +131,21 @@ function main() {
     res.end(JSON.stringify(obj));
   };
 
-  createServer((req, res) => {
+  return (req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, {});
-    if (req.method === 'GET' && req.url === '/privacy') {
-      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-      return res.end(PRIVACY_HTML);
-    }
-    const page = (req.method === 'GET' || req.method === 'HEAD') && pages.get(req.url.split('?')[0]);
+    const rawPath = (req.url || '').split('?')[0];
+    const cleanPath = rawPath === '/' ? '/' : rawPath.replace(/\/+$/, '');
+    const page = (req.method === 'GET' || req.method === 'HEAD') && pages.get(cleanPath);
     if (page) {
-      res.writeHead(200, { 'content-type': page[1], 'cache-control': 'public, max-age=3600' });
+      res.writeHead(200, {
+        'content-type': page[1],
+        'content-length': page[0].length,
+        'cache-control': 'public, max-age=3600',
+      });
       return res.end(req.method === 'HEAD' ? undefined : page[0]);
     }
-    if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, configured: Boolean(loadKey()) });
-    if (req.method !== 'POST' || req.url !== '/pass') return send(res, 404, { error: 'not found' });
+    if (req.method === 'GET' && cleanPath === '/health') return send(res, 200, { ok: true, configured: Boolean(loadKey()) });
+    if (req.method !== 'POST' || cleanPath !== '/pass') return send(res, 404, { error: 'not found' });
     if (!tokenOk(req.headers.authorization)) return send(res, 401, { error: 'unauthorized' });
     if (!loadKey()) return send(res, 503, { error: 'wallet-service not configured (issuer id / key file missing)' });
 
@@ -179,7 +177,30 @@ function main() {
         send(res, 500, { error: 'signing failed' });
       }
     });
-  }).listen(Number(process.env.PORT || 8787), () => console.log('wallet-service listening on', process.env.PORT || 8787));
+  };
+}
+
+function main() {
+  const issuerId = process.env.WALLET_ISSUER_ID || '';
+  const keyFile = process.env.WALLET_KEY_FILE || '';
+  // Loaded lazily, so the service can run (and answer 503) before the Google
+  // setup is done; dropping the key file in place activates it without a restart.
+  let key = null;
+  const loadKey = () => {
+    if (!key && issuerId && keyFile && existsSync(keyFile)) {
+      try { key = JSON.parse(readFileSync(keyFile, 'utf8')); } catch (e) { console.error('key file unreadable:', e.message); }
+    }
+    return key;
+  };
+  const token = process.env.API_TOKEN || '';
+  if (!token && process.env.ALLOW_PUBLIC !== '1') {
+    console.error('set API_TOKEN (or ALLOW_PUBLIC=1 to accept anyone)');
+    process.exit(2);
+  }
+  const limit = Number(process.env.RATE_LIMIT || 20);
+  const pages = loadPages();
+  const handler = createHandler({ pages, issuerId, loadKey, token, limit });
+  createServer(handler).listen(Number(process.env.PORT || 8787), () => console.log('wallet-service listening on', process.env.PORT || 8787));
 }
 
 // Served at /privacy; linked from the Chrome Web Store listing and the Google Wallet issuer profile.
