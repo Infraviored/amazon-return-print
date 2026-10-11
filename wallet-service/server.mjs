@@ -17,6 +17,20 @@
 import { createHash, createSign, timingSafeEqual } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Landing page, imprint and screenshots: a fixed list, read once at startup.
+const PUBLIC_DIR = join(dirname(fileURLToPath(import.meta.url)), 'public');
+const PAGES = {
+  '/': ['index.html', 'text/html; charset=utf-8'],
+  '/imprint': ['imprint.html', 'text/html; charset=utf-8'],
+  '/impressum': ['imprint.html', 'text/html; charset=utf-8'],
+  '/img/icon-128.png': ['icon-128.png', 'image/png'],
+  '/img/1-buttons.png': ['1-buttons.png', 'image/png'],
+  '/img/2-minimal-print.png': ['2-minimal-print.png', 'image/png'],
+  '/img/3-google-wallet.png': ['3-google-wallet.png', 'image/png'],
+};
 
 export function passPayload(issuerId, input, now = new Date()) {
   const suffix = createHash('sha256').update(input.qr).digest('hex').slice(0, 24);
@@ -78,6 +92,12 @@ export function validate(body) {
 }
 
 function main() {
+  const pages = new Map();
+  for (const [path, [file, type]] of Object.entries(PAGES)) {
+    const f = join(PUBLIC_DIR, file);
+    if (existsSync(f)) pages.set(path, [readFileSync(f), type]);
+    else console.error('missing public file:', file);
+  }
   const issuerId = process.env.WALLET_ISSUER_ID || '';
   const keyFile = process.env.WALLET_KEY_FILE || '';
   // Loaded lazily, so the service can run (and answer 503) before the Google
@@ -120,6 +140,11 @@ function main() {
     if (req.method === 'GET' && req.url === '/privacy') {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
       return res.end(PRIVACY_HTML);
+    }
+    const page = (req.method === 'GET' || req.method === 'HEAD') && pages.get(req.url.split('?')[0]);
+    if (page) {
+      res.writeHead(200, { 'content-type': page[1], 'cache-control': 'public, max-age=3600' });
+      return res.end(req.method === 'HEAD' ? undefined : page[0]);
     }
     if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, configured: Boolean(loadKey()) });
     if (req.method !== 'POST' || req.url !== '/pass') return send(res, 404, { error: 'not found' });

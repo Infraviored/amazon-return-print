@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Amazon Return Label Printer</title>
+<meta name="description" content="Free, open-source browser extension for Amazon.de returns: print only the return label on one page, or save the DHL return QR code to Google Wallet.">
+<link rel="icon" href="/img/icon-128.png">
+<style>
+:root{--fg:#1d2329;--muted:#5b6670;--bg:#fff;--card:#f4f6f8;--accent:#232f3e;--link:#0a5cb8}
+@media (prefers-color-scheme:dark){:root{--fg:#e6e9ec;--muted:#a3adb7;--bg:#14181c;--card:#1e242a;--accent:#e6e9ec;--link:#7ab4ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:960px;margin:0 auto;padding:2rem 16px 3rem}
+a{color:var(--link)}
+header{display:flex;gap:1rem;align-items:center}
+header img{width:64px;height:64px}
+h1{margin:0;font-size:1.8rem;line-height:1.2}
+.by{margin:0;color:var(--muted)}
+.lead{font-size:1.15rem;margin:1.5rem 0}
+.cta{display:flex;flex-wrap:wrap;gap:.75rem;margin:1.5rem 0 2rem}
+.cta a{display:inline-block;padding:.6rem 1rem;border-radius:6px;text-decoration:none;font-weight:600;border:1px solid var(--accent);color:var(--accent)}
+.cta a.primary{background:var(--accent);color:var(--bg)}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+figure{margin:0;background:var(--card);border-radius:8px;padding:.75rem}
+figure img{width:100%;height:auto;border-radius:4px;display:block}
+figcaption{font-size:.95rem;margin-top:.5rem}
+h2{margin-top:2.5rem;font-size:1.3rem}
+ol li,ul li{margin-bottom:.4rem}
+footer{border-top:1px solid var(--card);margin-top:3rem;padding-top:1rem;color:var(--muted);font-size:.9rem}
+footer a{color:var(--muted)}
+</style>
+</head><body><main>
+<header>
+  <img src="/img/icon-128.png" alt="">
+  <div>
+    <h1>Amazon Return Label Printer</h1>
+    <p class="by">A free, open-source browser extension by Florian Schneider</p>
+  </div>
+</header>
+
+<p class="lead">For Amazon.de returns: print only what the parcel counter needs on a single page,
+or put the DHL return QR code into Google Wallet and show it from your phone. No paper, no screenshots.</p>
+
+<div class="cta">
+  <a class="primary" href="https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/">Get it for Firefox</a>
+  <a href="https://github.com/Infraviored/amazon-return-print">Source code on GitHub</a>
+</div>
+
+<div class="shots">
+  <figure><img src="/img/1-buttons.png" alt="Two buttons added under the Amazon return QR code" width="1200" height="1009"><figcaption><b>Two buttons</b> right under the return label on amazon.de</figcaption></figure>
+  <figure><img src="/img/2-minimal-print.png" alt="Print preview with only the QR code and the item table on one page" width="1200" height="1009"><figcaption><b>Minimal print:</b> one A4 page, just the label and the item list</figcaption></figure>
+  <figure><img src="/img/3-google-wallet.png" alt="The return QR code saved as a Google Wallet pass" width="1200" height="1009"><figcaption><b>Google Wallet:</b> the return QR code as a pass on your phone</figcaption></figure>
+</div>
+
+<h2>How the Google Wallet pass works</h2>
+<ol>
+  <li>On the Amazon.de return page you click <b>Add to Google Wallet</b>. Nothing happens without that click.</li>
+  <li>The extension reads the DHL return QR code Amazon shows on that page, plus the return number, expiry date and item title.</li>
+  <li>This server (wallet.infraviored.com) signs a Google Wallet pass with exactly that QR code and hands back a link to Google's "Save to Google Wallet" page.</li>
+  <li>You save the pass and scan it at the DHL counter.</li>
+</ol>
+<p>One pass per return, a generic pass with the QR code, return number, carrier and expiry date. The pass expires on its own after the return deadline.
+No accounts, no marketing, no notifications, no updates to saved passes.</p>
+
+<h2>Privacy</h2>
+<p>The server stores nothing and sets no cookies; printing never leaves your browser.
+Details: <a href="/privacy">privacy policy</a>.</p>
+
+<p>This is an independent project. It is not affiliated with, endorsed by or sponsored by Amazon, DHL or Google.</p>
+
+<footer>
+  Florian Schneider · <a href="/imprint">Imprint / Impressum</a> · <a href="/privacy">Privacy / Datenschutz</a> ·
+  <a href="https://github.com/Infraviored/amazon-return-print/issues">Contact via GitHub</a>
+</footer>
+</main></body></html>

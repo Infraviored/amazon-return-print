@@ -38,3 +38,11 @@ test('validate rejects unknown fields and bad values', () => {
   assert.match(validate({ qr, title: '<script>' }), /title/);
   assert.match(validate({ qr, deadline: '15.10.2026' }), /deadline/);
 });
+
+test('every landing page file exists', async () => {
+  const { existsSync } = await import('node:fs');
+  const src = (await import('node:fs')).readFileSync(new URL('./server.mjs', import.meta.url), 'utf8');
+  const files = [...src.matchAll(/\['([\w.-]+\.(?:html|png))'/g)].map(m => m[1]);
+  assert.ok(files.length >= 5);
+  for (const f of files) assert.ok(existsSync(new URL('./public/' + f, import.meta.url)), f);
+});

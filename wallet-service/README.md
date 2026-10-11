@@ -27,6 +27,10 @@ For a private instance, set `API_TOKEN` instead: requests then need `Authorizati
 
 `docker-compose.yml` is the home-server variant: it expects `.env`, `secrets/` and the external `proxy-network`.
 
+## Website
+
+`GET /` serves a landing page for the extension, `/imprint` (also `/impressum`) the imprint and `/privacy` the privacy policy. Google asks for this page when you request Wallet publishing access, and it is the website entered in the Pay & Wallet Console. The pages and screenshots live in `public/`; the server serves a fixed list of them (`PAGES` in `server.mjs`), nothing else from that directory.
+
 ## API
 
 `POST /pass` with JSON:
