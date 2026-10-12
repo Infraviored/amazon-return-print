@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Amazon Return Label Printer</title>
+<meta name="description" content="Free, open-source browser extension for Amazon.de returns: print only the return label on one page, or save the DHL return QR code to Google Wallet.">
+<link rel="icon" href="/img/icon-128.png">
+<style>
+:root{
+  --bg:#f6f4ef;--surface:#fff;--fg:#16191d;--muted:#5d6670;--line:#e4e0d6;
+  --navy:#131a22;--navy2:#232f3e;--orange:#ff9900;--orange-ink:#1a1200;--link:#0b5cad;
+  --shadow:0 1px 2px rgba(19,26,34,.06),0 8px 24px rgba(19,26,34,.08);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1317;--surface:#171c22;--fg:#e8eaed;--muted:#9aa4ae;--line:#262d35;--link:#8cc2ff;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--link)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* hero */
+.hero{background:radial-gradient(1200px 500px at 85% -10%,#3a4a5e 0,transparent 60%),linear-gradient(180deg,var(--navy) 0,var(--navy2) 100%);color:#f3f4f6;padding:28px 0 0;overflow:hidden}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.95rem;color:#cfd5dc}
+.brand img{width:28px;height:28px}
+.hero-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center;padding:48px 0 0}
+.eyebrow{display:inline-block;font-size:.8rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--orange);margin-bottom:14px}
+h1{font-size:clamp(2rem,4.4vw,3.2rem);line-height:1.08;letter-spacing:-.02em;margin:0 0 18px}
+h1 em{font-style:normal;color:var(--orange)}
+.hero p.lead{font-size:1.15rem;color:#c9d0d8;margin:0 0 28px;max-width:34em}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:10px;font-weight:600;font-size:1rem;text-decoration:none;transition:transform .12s ease,background .12s ease}
+.btn:hover{transform:translateY(-1px)}
+.btn svg{width:22px;height:22px;flex:none}
+.btn-primary{background:var(--orange);color:var(--orange-ink)}
+.btn-primary:hover{background:#ffad33}
+.btn-ghost{background:rgba(255,255,255,.08);color:#f3f4f6;border:1px solid rgba(255,255,255,.18)}
+.btn-ghost:hover{background:rgba(255,255,255,.14)}
+.fineprint{font-size:.88rem;color:#9aa6b2;margin:0}
+.fineprint a{color:#c9d0d8}
+.hero-shot{align-self:end;margin-bottom:-6px}
+.hero-shot img{display:block;width:100%;height:auto;border-radius:14px 14px 0 0;box-shadow:0 -10px 60px rgba(0,0,0,.45)}
+
+/* sections */
+section{padding:72px 0 0}
+h2{font-size:clamp(1.5rem,2.6vw,2rem);letter-spacing:-.01em;line-height:1.2;margin:0 0 10px}
+.sub{color:var(--muted);margin:0 0 32px;max-width:40em}
+
+.features{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.feature{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.feature img{display:block;width:100%;height:auto;border-bottom:1px solid var(--line)}
+.feature .body{padding:22px 24px 26px}
+.feature h3{margin:0 0 6px;font-size:1.2rem;display:flex;align-items:center;gap:10px}
+.feature h3 .ico{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#fff3e0;color:#b36b00;font-size:1rem}
+.feature p{margin:0;color:var(--muted)}
+
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 20px;position:relative}
+.steps li::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy2);color:#fff;font-weight:700;font-size:.9rem;margin-bottom:12px}
+.steps b{display:block;margin-bottom:4px}
+.steps span{color:var(--muted);font-size:.95rem}
+.note{margin:20px 0 0;color:var(--muted);font-size:.95rem}
+
+.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.trust div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.trust b{display:block;font-size:1.05rem;margin-bottom:4px}
+.trust span{color:var(--muted);font-size:.95rem}
+
+.disclaimer{margin:56px 0 0;padding:18px 22px;border-left:3px solid var(--orange);background:var(--surface);border-radius:0 10px 10px 0;color:var(--muted);font-size:.95rem}
+
+footer{margin-top:72px;border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);font-size:.92rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:space-between}
+footer nav{display:flex;flex-wrap:wrap;gap:6px 18px}
+footer a{color:var(--muted);text-decoration:none}
+footer a:hover{color:var(--fg);text-decoration:underline}
+
+@media (max-width:860px){
+  .hero-grid{grid-template-columns:1fr;gap:32px;padding-top:32px}
+  .features{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr 1fr}
+  .trust{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  .steps{grid-template-columns:1fr}
+  .btn{flex:1 1 100%;justify-content:center}
+}
+</style>
+</head><body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brand"><img src="/img/icon-128.png" alt="">Amazon Return Label Printer</div>
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Free browser extension · Amazon.de</span>
+        <h1>Returns without the <em>paper mess</em>.</h1>
+        <p class="lead">Print only what the parcel counter needs on a single page, or put the DHL return QR code straight into Google Wallet and show it from your phone.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="https://addons.mozilla.org/en-US/firefox/addon/amazon-return-label-printer/">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 15c1.5 2 4 3 6.5 2.3A5 5 0 0 0 17 11c-.4 1-1.3 1.6-2.3 1.6 1-1.8.2-4-1.7-4.8.5 1.3-.2 2.5-1.3 2.9-1.5.5-3.2-.2-3.7-1.6-.8 1.4-1 3.2 0 5.9z" fill="currentColor"/></svg>
+            Add to Firefox
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/Infraviored/amazon-return-print#-installation-temporary-for-development">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 8h9M8.5 14 4 6.5M15.5 14 11 21.8" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+            Chrome &amp; Edge
+          </a>
+        </div>
+        <p class="fineprint">Free and open source (MIT) · <a href="https://github.com/Infraviored/amazon-return-print">Source code on GitHub</a></p>
+      </div>
+      <div class="hero-shot"><img src="/img/1-buttons.png" alt="Two buttons added under the Amazon return QR code" width="1200" height="1009"></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <h2>Two buttons, right under your return label</h2>
+    <p class="sub">The Amazon page stays as it is. The extension adds two buttons below each label, so it works with several returns on one page too.</p>
+    <div class="features">
+      <article class="feature">
+        <img src="/img/2-minimal-print.png" alt="Print preview with only the QR code and the item table on one page" width="1200" height="1009" loading="lazy">
+        <div class="body">
+          <h3><span class="ico">🖨</span>Minimal print</h3>
+          <p>One A4 page with the label or QR code and the item list. No Amazon menus, no instructions, no second page.</p>
+        </div>
+      </article>
+      <article class="feature">
+        <img src="/img/3-google-wallet.png" alt="The return QR code saved as a Google Wallet pass" width="1200" height="1009" loading="lazy">
+        <div class="body">
+          <h3><span class="ico">📱</span>Google Wallet</h3>
+          <p>For "label free, box free" returns: the DHL return QR code as a pass on your phone, with return number, carrier and expiry date.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>How the Google Wallet pass is made</h2>
+    <p class="sub">Only on your click, one pass per return, nothing kept afterwards.</p>
+    <ol class="steps">
+      <li><b>You click "Google Wallet"</b><span>on the Amazon.de return page. Nothing happens without that click.</span></li>
+      <li><b>The extension reads the code</b><span>the DHL return QR code Amazon shows, plus return number, expiry date and item title.</span></li>
+      <li><b>This server signs the pass</b><span>wallet.infraviored.com signs a pass with exactly that QR code and links to Google's save page.</span></li>
+      <li><b>Scan it at the counter</b><span>Save the pass and show it at the DHL counter. It expires after the return deadline.</span></li>
+    </ol>
+    <p class="note">A generic pass with the QR code, return number, carrier and expiry date. No accounts, no marketing, no notifications, no updates to saved passes.</p>
+  </section>
+
+  <section>
+    <h2>Private by design</h2>
+    <p class="sub">Details in the <a href="/privacy">privacy policy</a>.</p>
+    <div class="trust">
+      <div><b>Printing stays local</b><span>Minimal print runs entirely in your browser. No data leaves your device.</span></div>
+      <div><b>Nothing stored</b><span>The signing server keeps no pass data, has no user accounts and sets no cookies.</span></div>
+      <div><b>No tracking</b><span>No analytics, no ads. The source code is public on GitHub.</span></div>
+    </div>
+  </section>
+
+  <p class="disclaimer">An independent open-source project by Florian Schneider. Not affiliated with, endorsed by or sponsored by Amazon, DHL or Google.</p>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© Florian Schneider</span>
+    <nav>
+      <a href="/imprint">Imprint / Impressum</a>
+      <a href="/privacy">Privacy / Datenschutz</a>
+      <a href="https://github.com/Infraviored/amazon-return-print">GitHub</a>
+      <a href="mailto:support@infraviored.com">support@infraviored.com</a>
+    </nav>
+  </div>
+</footer>
+</body></html>

@@ -4,3 +4,5 @@ web-ext-artifacts/
 node_modules/
 .wt/
 amazon-return-print.zip
+wallet-service/.env
+wallet-service/secrets/
