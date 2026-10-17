@@ -1,7 +1,6 @@
 {
   "manifest_version": 2,
   "permissions": [
-    "activeTab",
     "https://trans-qrcode-images-eu.s3.eu-west-1.amazonaws.com/*"
   ],
   "background": {
