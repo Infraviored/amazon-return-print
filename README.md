@@ -90,8 +90,6 @@ For "label free box free" returns Amazon shows a QR code instead of a label. **G
 
 Nothing to configure. Privacy: only the QR content, return number, carrier, expiry date and the item title are sent to the service; it stores nothing.
 
-> The Wallet issuer is still in Google's demo mode, so for now only registered test accounts can save passes.
-
 ---
 
 ## 🐞 Known Issues
