@@ -1,6 +1,6 @@
 {
   "extName": {
-    "message": "Amazon Return Label Printer"
+    "message": "Amazon Return Helper"
   },
   "extDescription": {
     "message": "Amazon returns: print only the label and item list on one page, or save the return QR code to Google Wallet."

@@ -40,7 +40,7 @@ export function passPayload(issuerId, input, now = new Date()) {
     classId,
     state: 'ACTIVE',
     hexBackgroundColor: '#232f3e',
-    cardTitle: { defaultValue: { language: 'de', value: 'Amazon Rücksendung' } },
+    cardTitle: { defaultValue: { language: 'de', value: 'Amazon Return Helper' } },
     header: { defaultValue: { language: 'de', value: input.title || 'Rücksendung' } },
     barcode: { type: 'QR_CODE', value: input.qr, alternateText: input.returnId || '' },
     textModulesData: [
@@ -206,11 +206,11 @@ function main() {
 // Served at /privacy; linked from the Chrome Web Store listing and the Google Wallet issuer profile.
 export const PRIVACY_HTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Privacy Policy – Amazon Return Label Printer</title>
+<title>Privacy Policy – Amazon Return Helper</title>
 <style>body{font:16px/1.6 system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 16px;color:#222}h2{margin-top:2rem}</style>
 </head><body>
 <h1>Privacy Policy</h1>
-<p>This policy covers the browser extension <b>Amazon Return Label Printer</b> and its pass-signing service at wallet.infraviored.com.</p>
+<p>This policy covers the browser extension <b>Amazon Return Helper</b> and its pass-signing service at wallet.infraviored.com.</p>
 <h2>Minimal print</h2>
 <p>Printing runs entirely in your browser. No data leaves your device.</p>
 <h2>Google Wallet</h2>
@@ -226,7 +226,7 @@ It does not store, log or share this data, and it sets no cookies. Your IP addre
 <hr>
 <h1 lang="de">Datenschutzerklärung</h1>
 <div lang="de">
-<p>Gilt für die Browser-Extension <b>Amazon Return Label Printer</b> und ihren Signierdienst unter wallet.infraviored.com.</p>
+<p>Gilt für die Browser-Extension <b>Amazon Return Helper</b> und ihren Signierdienst unter wallet.infraviored.com.</p>
 <p><b>Minimal drucken</b> läuft komplett im Browser. Es verlassen keine Daten dein Gerät.</p>
 <p><b>Google Wallet:</b> Nur wenn du auf den Wallet-Button klickst, schickt die Extension QR-Inhalt, Rücksendenummer, Versanddienst, Ablaufdatum und Artikeltitel an wallet.infraviored.com.
 Der Dienst signiert damit einmalig einen Google-Wallet-Pass und gibt den Link zur Google-Speicherseite zurück. Er speichert, protokolliert und teilt nichts und setzt keine Cookies. Deine IP-Adresse liegt höchstens eine Stunde im Arbeitsspeicher für die Ratenbegrenzung; das normale Zugriffsprotokoll des Webservers enthält IP-Adresse, Zeit und aufgerufene URL (nie die Pass-Daten).</p>
