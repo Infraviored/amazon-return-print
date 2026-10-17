@@ -1,4 +1,6 @@
-# Amazon Return Label Printer
+<img src="src/icons/icon-128.png" alt="" width="64" height="64">
+
+# Amazon Return Helper
 
 **Tired of wasting paper when printing Amazon return labels? Or of printing at all?**
 This Firefox and Chrome add-on puts two buttons right under your Amazon.de return label: **print only what matters** on one page, or **drop the return QR code straight into Google Wallet** and show it at the DHL counter from your phone.

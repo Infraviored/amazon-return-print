@@ -1,6 +1,6 @@
 {
   "extName": {
-    "message": "Amazon Return Label Printer"
+    "message": "Amazon Return Helper"
   },
   "extDescription": {
     "message": "Amazon-Rücksendung: nur Etikett und Artikelliste auf einer Seite drucken oder den Rücksende-QR-Code in Google Wallet speichern."

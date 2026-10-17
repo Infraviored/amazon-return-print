@@ -55,7 +55,7 @@ test('static page routing: GET, HEAD, query strings, content-length and trailing
     assert.equal(indexRes.headers.get('cache-control'), 'public, max-age=3600');
     const indexHtml = await indexRes.text();
     assert.equal(indexRes.headers.get('content-length'), String(Buffer.byteLength(indexHtml)));
-    assert.match(indexHtml, /Amazon Return Label Printer/);
+    assert.match(indexHtml, /Amazon Return Helper/);
 
     // HEAD / returns identical headers and empty body
     const headIndex = await fetch(`${base}/`, { method: 'HEAD' });
